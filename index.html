@@ -31,7 +31,7 @@ button{font:inherit;color:inherit}
 .dark .eyebrow{color:var(--c1)}
 h1,h2,h3{text-wrap:balance;margin:0}
 h1,h2{font-family:var(--display);font-weight:600;letter-spacing:-.025em}
-h2{font-size:clamp(1.85rem,4.6vw,3.9rem);line-height:1.08}
+h2{font-size:clamp(1.9rem,min(4.6vw,6.6vh),3.9rem);line-height:1.08}
 h3{font-family:var(--body);font-size:1.12rem;font-weight:700;letter-spacing:-.01em}
 .lede{font-size:clamp(1rem,1.45vw,1.2rem);color:var(--ink-2);max-width:54ch;margin:0;line-height:1.62}
 .dark .lede{color:var(--d-ink-2)}
@@ -92,7 +92,7 @@ h3{font-family:var(--body);font-size:1.12rem;font-weight:700;letter-spacing:-.01
 #space{position:absolute;inset:0;width:100%;height:100%;display:block}
 .vign{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 80% at 50% 40%,rgba(0,0,0,0) 50%,rgba(2,3,10,.55) 100%)}
 .anchor{position:absolute;aspect-ratio:1;pointer-events:none}
-.hero-anchor{left:50%;top:34%;width:clamp(150px,40vw,260px);transform:translate(-50%,-50%)}
+.hero-anchor{left:50%;top:31%;width:clamp(130px,min(40vw,30vh),250px);transform:translate(-50%,-50%)}
 .rest{position:absolute;left:var(--gutter);right:var(--gutter);top:50%;transform:translateY(-50%);display:grid;justify-items:center;gap:16px;text-align:center;opacity:var(--rest,1)}
 .rest .eyebrow{color:rgba(190,205,255,.85)}
 .rest p.big{margin:0;font:500 clamp(1.4rem,3.4vw,2.4rem)/1.2 var(--display);letter-spacing:-.02em;color:#fff}
@@ -101,13 +101,13 @@ h3{font-family:var(--body);font-size:1.12rem;font-weight:700;letter-spacing:-.01
 @keyframes drop{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
 .copy{position:absolute;left:var(--gutter);right:var(--gutter);bottom:calc(env(safe-area-inset-bottom,0px) + 7svh);display:grid;justify-items:center;gap:16px;text-align:center;opacity:var(--copy,0);filter:blur(calc((1 - var(--copy,0)) * 12px));transform:translateY(calc((1 - var(--copy,0)) * 30px));pointer-events:none}
 .copy[data-live="1"]{pointer-events:auto}
-.copy h1{font-size:clamp(1.95rem,5.6vw,4.6rem);line-height:1.08}
+.copy h1{font-size:clamp(1.95rem,min(5.6vw,7.4vh),4.6rem);line-height:1.08}
 .copy h1 span{display:block;padding-bottom:.08em}
 .copy p{margin:0;color:rgba(235,238,255,.8);font-size:clamp(.95rem,1.3vw,1.12rem)}
 .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
 .fallback-star{display:none;position:absolute;left:50%;top:34%;width:clamp(140px,34vw,220px);transform:translate(-50%,-50%);filter:drop-shadow(0 0 40px rgba(140,180,255,.5))}
 html.no-gl .fallback-star{display:block}
-@media (max-height:720px){.hero-anchor,.fallback-star{top:30%;width:clamp(120px,32vw,190px)}.copy{bottom:5svh;gap:12px}}
+@media (max-height:720px){.hero-anchor,.fallback-star{top:28%;width:clamp(110px,28vh,190px)}.copy{bottom:5svh;gap:12px}}
 
 .dawn{position:relative;height:80vh;background:linear-gradient(180deg,#3a2a7c 0%,#7c63b6 26%,#cdb8e2 56%,#ece6f2 80%,var(--paper) 100%)}
 .statement{position:relative;padding:4vh var(--gutter) clamp(90px,16vh,170px);background:var(--paper)}
@@ -117,13 +117,17 @@ html.no-gl .fallback-star{display:block}
 .who span{padding:9px 15px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--ink-2)}
 
 /* ---------- Chapter shell ---------- */
-.pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,3.4vh,40px);padding-inline:var(--gutter)}
+.pin{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(14px,2.6vh,30px);padding:calc(env(safe-area-inset-top,0px) + 74px) var(--gutter) calc(env(safe-area-inset-bottom,0px) + clamp(16px,3.5vh,40px))}
+.stagebox{container-type:size;min-height:0;min-width:0;display:grid;place-items:center}
+.foot-row{display:grid;gap:10px;justify-items:center}
 .head{width:100%;max-width:1040px;margin-inline:auto;display:grid;gap:14px}
 .head.center{text-align:center;justify-items:center}
 
 /* ---------- Chapter 1: live subtitles ---------- */
 .live{position:relative;height:250vh}
-.dev-wrap{width:min(1120px,100%,calc((100svh - 330px) * 2.1));margin-inline:auto;perspective:1900px}
+.dev-wrap{width:min(1120px,100cqw,calc(100cqh * 2.02));margin-inline:auto;perspective:1900px}
+@media (max-width:699px){.dev-wrap{width:min(100cqw,calc(100cqh * .47))}.dev-wrap .screen{aspect-ratio:9/19.5}.dev-wrap .punch{left:50%;top:2.4%;width:4%;transform:translateX(-50%)}.dev-wrap .vid-top{top:6%}.dev-wrap .sub{width:88%;bottom:12%}.live .lede{display:none}}
+@media (max-aspect-ratio:3/4){.hero-anchor,.fallback-star{top:36%;width:clamp(150px,46vw,240px)}}
 .device{position:relative;transform-style:preserve-3d;transform-origin:50% 80%}
 html.no-gl .device{transform:rotateX(calc(var(--tilt,60) * 1deg)) scale(var(--ds,.84))}
 html.gl .frame,html.gl .tphone{visibility:hidden}
@@ -156,11 +160,11 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
 .stats div{display:grid;gap:4px;min-width:0}
 .stats b{font:600 clamp(1.3rem,3vw,2.2rem)/1.1 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .stats span{font-size:clamp(11.5px,1.2vw,14px);color:var(--ink-3);line-height:1.35}
-@media (max-width:640px){.live .lede{font-size:.95rem}.live-anchor{transform:translate(18%,-62%)}}
+@media (max-width:640px){.live-anchor{transform:translate(10%,-60%)}.stats b{font-size:1.35rem}.stats span{font-size:12.5px}}
 
 /* ---------- Chapter 2: conversation ---------- */
 .talk{position:relative;height:320vh;background:#000}
-.orbit{position:relative;height:min(56svh,640px);width:100%;max-width:1000px;margin-inline:auto}
+.orbit{position:relative;height:100cqh;width:100cqw;max-width:1000px;margin-inline:auto}
 .tphone{position:absolute;left:50%;top:50%;height:100%;aspect-ratio:1/2.06;transform:translate(-50%,-50%);border-radius:14%/6.6%;padding:3%;background:linear-gradient(145deg,#3b3d4a,#111217 45%,#2a2b33);box-shadow:inset 0 0 0 1.5px #4e505d,0 40px 70px -30px rgba(0,0,0,.9)}
 .tscreen{position:relative;height:100%;border-radius:12%/5.6%;overflow:hidden;background:linear-gradient(180deg,#0d1030,#06071a);display:flex;flex-direction:column;gap:5%;padding:17% 7% 7%;font-size:clamp(8px,1.4svh,11.5px);color:#e9ebfa}
 .tscreen::before{content:"";position:absolute;left:50%;top:2.8%;width:6%;aspect-ratio:1;border-radius:50%;background:#000;transform:translateX(-50%)}
@@ -182,7 +186,7 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
 .step.on{color:#fff;box-shadow:inset 0 0 0 1px rgba(110,231,255,.45),0 0 30px -10px rgba(110,231,255,.5)}
 .step.on b{background:linear-gradient(135deg,var(--c1),var(--c3));color:#05061a}
 .consent{margin:0;text-align:center;font-size:12.5px;color:var(--d-ink-3)}
-@media (max-width:640px){.step:not(.on){display:none}.talk .lede{display:none}}
+@media (max-width:640px){.step:not(.on){display:none}.talk .lede{display:none}.step{font-size:15px}}
 
 /* ---------- Chapter 3: sign language ---------- */
 .sign{position:relative;padding-block:clamp(100px,16vh,180px);padding-inline:var(--gutter);background:#fff}
@@ -217,7 +221,11 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
 .pose{padding:8px 13px;border-radius:999px;border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--line);font-size:13px;color:var(--ink-2);cursor:pointer;transition:all .25s}
 .pose:hover{color:var(--ink)}
 .pose.on{background:var(--ink);color:#fff;box-shadow:none}
-@media (max-width:640px){.sign-anchor{transform:translate(-14%,-56%)}.facts b{font-size:1.05rem}}
+@media (max-width:640px){.sign-anchor{transform:translate(-14%,-56%)}.facts b{font-size:1.1rem}.facts span{font-size:13px}
+  .dawn{height:42vh}.statement{padding-bottom:72px}.statement p{font-size:1.55rem}.who span{font-size:14.5px}
+  .langs{padding-block:72px}.sign,.how,.dict,.specs{padding-block:84px}.demo{padding-block:84px 64px}.foot{padding-block:84px 40px}
+  .lede{font-size:1.04rem}.node small,.priv span,.spec-list dd{font-size:15px}.hud{max-width:none}.poses{max-width:none}.pose{font-size:14px;padding:9px 14px}
+  .demo-head{margin-bottom:32px}.phone{height:min(760px,88svh)}}
 
 /* ---------- Story: silence → hands → voice ---------- */
 .story{position:relative;height:680vh;background:#fff}
@@ -470,7 +478,7 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
         <h2>Phụ đề nổi trên <span class="iri">mọi màn hình.</span></h2>
         <p class="lede">Bật một lần rồi mở bất kỳ ứng dụng nào: phim, livestream, bài giảng, cuộc gọi. LiveSub AI nghe âm thanh và hiện bản dịch tiếng Việt ngay trên video, theo thời gian thực.</p>
       </div>
-      <div class="dev-wrap">
+      <div class="stagebox"><div class="dev-wrap">
         <div class="device" id="device">
           <div class="device-glow"></div>
           <div class="frame">
@@ -484,7 +492,7 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
           <div class="pshadow" id="liveShadow"></div>
           <div class="anchor live-anchor" data-anchor data-rot="14"></div>
         </div>
-      </div>
+      </div></div>
       <div class="stats">
         <div><b>3 → 1</b><span>Anh, Nhật, Trung sang tiếng Việt</span></div>
         <div><b>Mọi app</b><span>Phụ đề nổi do Android hiển thị</span></div>
@@ -500,7 +508,7 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
         <h2>Dịch phiên âm 1:1.<br><span class="iri">Thiết bị thông minh hơn.</span></h2>
         <p class="lede">Micro điện thoại nghe người đối diện, AI dịch sang tiếng Việt, và bản dịch được đọc nhỏ vào tai nghe của bạn.</p>
       </div>
-      <div class="orbit">
+      <div class="stagebox"><div class="orbit">
         <div class="pshadow tshadow" id="talkShadow"></div>
         <div class="tphone" id="tphone">
           <div class="tscreen">
@@ -514,13 +522,13 @@ html.gl .frame,html.gl .tphone{visibility:hidden}
           </div>
           <div class="anchor talk-anchor" data-anchor data-rot="-16"></div>
         </div>
-      </div>
-      <div class="steps" id="steps">
+      </div></div>
+      <div class="foot-row"><div class="steps" id="steps">
         <div class="step on"><b>1</b>Micro nghe người đối diện</div>
         <div class="step"><b>2</b>AI dịch sang tiếng Việt</div>
         <div class="step"><b>3</b>Bản dịch đọc vào tai nghe</div>
       </div>
-      <p class="consent">Chỉ dùng khi người đối diện đồng ý.</p>
+      <p class="consent">Chỉ dùng khi người đối diện đồng ý.</p></div>
     </div>
   </section>
 
@@ -921,7 +929,9 @@ if (hasGL) {
   const mkTex = cv => { const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAni; return t; };
   const liveCv = document.createElement('canvas'); liveCv.width = 1600; liveCv.height = 752;
   const talkCv = document.createElement('canvas'); talkCv.width = 720; talkCv.height = 1532;
-  const liveTex = mkTex(liveCv), talkTex = mkTex(talkCv);
+  const liveCvP = document.createElement('canvas'); liveCvP.width = 720; liveCvP.height = 1532;
+  const liveTex = mkTex(liveCv), talkTex = mkTex(talkCv), liveTexP = mkTex(liveCvP);
+  const livePhoneP = makePhone(1, 2.06, liveTexP, false);
   const livePhone = makePhone(2.06, 1, liveTex, true);
   const talkPhone = makePhone(1, 2.06, talkTex, false);
 
@@ -954,7 +964,7 @@ if (hasGL) {
     camera.aspect = W / H; camera.position.set(0, 0, (H / 2) / Math.tan(15 * Math.PI / 180)); camera.near = 1; camera.far = camera.position.z + 12000; camera.updateProjectionMatrix();
   }
   resize(); addEventListener('resize', resize);
-  O = { renderer, scene, camera, root, spin, wings, bars, glow, buds, livePhone, talkPhone, liveCv, talkCv, liveTex, talkTex };
+  O = { renderer, scene, camera, root, spin, wings, bars, glow, buds, livePhone, livePhoneP, talkPhone, liveCv, liveCvP, talkCv, liveTex, liveTexP, talkTex };
 }
 
 /* ---------- Hero 3D space ---------- */
@@ -1117,17 +1127,18 @@ function frame(now) {
   O.glow.material.opacity = lerp(.35, 1, onHero);
 
   // live phone (3D)
-  const liveOn = lr.top < vh && lr.bottom > 0;
-  O.livePhone.visible = liveOn;
+  const liveOn = lr.top < vh && lr.bottom > 0, port = vw < 700;
+  const LP = port ? O.livePhoneP : O.livePhone;
+  O.livePhone.visible = liveOn && !port; O.livePhoneP.visible = liveOn && port;
   if (liveOn) {
     const fr = liveFrame.getBoundingClientRect();
     const e = easeOut(ss(0, .34, pL));
     const [px, py] = toW(fr.left + fr.width / 2, fr.top + fr.height / 2);
-    O.livePhone.position.set(px, py - (1 - e) * vh * .1, -(1 - e) * 260);
-    O.livePhone.scale.setScalar(fr.width / 2.1);
+    LP.position.set(px, py - (1 - e) * vh * .1, -(1 - e) * 260);
+    LP.scale.setScalar(port ? fr.height / 2.1 : fr.width / 2.1);
     const sway = reduce ? 0 : 1;
-    O.livePhone.rotation.set(lerp(-1.2, 0, e) + Math.sin(tNow * .5) * .025 * sway - mouse.y * .05, lerp(.6, 0, e) + Math.sin(tNow * .4) * .05 * sway + mouse.x * .09, lerp(-.14, 0, e));
-    drawLive(O.liveCv, tNow); O.liveTex.needsUpdate = true;
+    LP.rotation.set(lerp(-1.2, 0, e) + Math.sin(tNow * .5) * .025 * sway - mouse.y * .05, lerp(.6, 0, e) + Math.sin(tNow * .4) * .05 * sway + mouse.x * .09, lerp(-.14, 0, e));
+    if (port) { drawLive(O.liveCvP, tNow); O.liveTexP.needsUpdate = true; } else { drawLive(O.liveCv, tNow); O.liveTex.needsUpdate = true; }
   }
 
   // talk phone + earbuds orbit (real depth: buds pass behind the phone)
@@ -1142,7 +1153,7 @@ function frame(now) {
     O.talkPhone.rotation.set(.05 - mouse.y * .05, lerp(Math.PI, 0, turn) + Math.sin(pT * Math.PI * 2) * .2 * turn + mouse.x * .1, 0);
     drawTalk(O.talkCv, tNow, pT); O.talkTex.needsUpdate = true;
     const R = Math.min(Math.max(pr.width * 1.25, 140), vw * .42);
-    const size = clamp(vw * .028, 16, 28);
+    const size = clamp(pr.height * .055, 16, 30);
     const enter = ss(.04, .16, pT), rest = ss(.8, .95, pT);
     const base = pT * Math.PI * 2.6 + Math.PI * .25;
     O.buds.forEach((b, j) => {
@@ -1160,7 +1171,7 @@ function frame(now) {
     });
     setVar(talkShadow, '--psh', turn);
   }
-  const anyVis = O.root.visible || O.livePhone.visible || O.talkPhone.visible;
+  const anyVis = O.root.visible || O.livePhone.visible || O.livePhoneP.visible || O.talkPhone.visible;
   if (anyVis || O.dirty) { O.renderer.render(O.scene, O.camera); O.dirty = anyVis; }
 }
 requestAnimationFrame(frame);
@@ -1243,35 +1254,35 @@ function wrapLines(g, text, maxW) {
 }
 const FONT = '"Be Vietnam Pro", system-ui, sans-serif';
 function drawLive(cv, t) {
-  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, port = H > W, u = Math.min(W, H) / 752;
   drawBokehTo(g, W, H, t, true);
   g.textBaseline = 'middle';
-  // chips
-  rrPath(g, 150, 46, 132, 48, 24); g.fillStyle = 'rgba(5,7,20,.5)'; g.fill();
-  g.fillStyle = '#ff4d63'; g.beginPath(); g.arc(178, 70, 7, 0, 6.283); g.fill();
-  g.fillStyle = '#fff'; g.font = '500 22px "Roboto Mono", monospace'; g.textAlign = 'left'; g.fillText('LIVE', 196, 71);
-  const lang = liveLang.textContent; g.font = '500 22px "Roboto Mono", monospace';
-  const lw = g.measureText(lang).width + 44; rrPath(g, W - 70 - lw, 46, lw, 48, 24); g.fillStyle = 'rgba(5,7,20,.5)'; g.fill();
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(lang, W - 70 - lw / 2, 71);
-  // subtitle overlay
-  const src = liveSrc.textContent, vi = liveVi.textContent || ' ', maxW = W * .66;
-  g.font = `400 30px ${FONT}`; const sl = wrapLines(g, src, maxW);
-  g.font = `600 48px ${FONT}`; const vl = wrapLines(g, vi, maxW);
-  const bh = 40 + sl.length * 42 + vl.length * 62 + 14, bw = W * .74, bx = (W - bw) / 2, by = H - 86 - bh;
-  rrPath(g, bx, by, bw, bh, 30); g.fillStyle = 'rgba(8,10,28,.64)'; g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 2; g.stroke();
-  let y = by + 40;
-  g.font = `400 30px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.66)';
-  sl.forEach(l => { g.fillText(l, W / 2, y); y += 42; });
-  y += 12; g.font = `600 48px ${FONT}`; g.fillStyle = '#fff';
+  const x0 = (port ? 44 : 150) * u, y0 = (port ? 120 : 46) * u, ch = 48 * u;
+  rrPath(g, x0, y0, 132 * u, ch, ch / 2); g.fillStyle = 'rgba(5,7,20,.5)'; g.fill();
+  g.fillStyle = '#ff4d63'; g.beginPath(); g.arc(x0 + 28 * u, y0 + ch / 2, 7 * u, 0, 6.283); g.fill();
+  g.fillStyle = '#fff'; g.font = `500 ${22 * u}px "Roboto Mono", monospace`; g.textAlign = 'left'; g.fillText('LIVE', x0 + 46 * u, y0 + ch / 2 + 1);
+  const lang = liveLang.textContent, lw = g.measureText(lang).width + 44 * u, lx = W - (port ? 44 : 70) * u - lw;
+  rrPath(g, lx, y0, lw, ch, ch / 2); g.fillStyle = 'rgba(5,7,20,.5)'; g.fill();
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(lang, lx + lw / 2, y0 + ch / 2 + 1);
+  const src = liveSrc.textContent, vi = liveVi.textContent || ' ', maxW = W * (port ? .76 : .66);
+  const fs1 = (port ? 32 : 30) * u, fs2 = (port ? 50 : 48) * u, lh1 = fs1 * 1.4, lh2 = fs2 * 1.3;
+  g.font = `400 ${fs1}px ${FONT}`; const sl = wrapLines(g, src, maxW);
+  g.font = `600 ${fs2}px ${FONT}`; const vl = wrapLines(g, vi, maxW);
+  const bh = 40 * u + sl.length * lh1 + vl.length * lh2 + 14 * u, bw = W * (port ? .88 : .74), bx = (W - bw) / 2, by = H - (port ? 230 : 86) * u - bh;
+  rrPath(g, bx, by, bw, bh, 30 * u); g.fillStyle = 'rgba(8,10,28,.64)'; g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 2 * u; g.stroke();
+  let y = by + 40 * u;
+  g.font = `400 ${fs1}px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.66)';
+  sl.forEach(l => { g.fillText(l, W / 2, y); y += lh1; });
+  y += 12 * u; g.font = `600 ${fs2}px ${FONT}`; g.fillStyle = '#fff';
   vl.forEach((l, i) => {
     g.fillText(l, W / 2, y);
-    if (i === vl.length - 1 && Math.sin(t * 6) > 0) { const ex = W / 2 + g.measureText(l).width / 2 + 8; g.fillStyle = '#6ee7ff'; g.fillRect(ex, y - 24, 4, 48); g.fillStyle = '#fff'; }
-    y += 62;
+    if (i === vl.length - 1 && Math.sin(t * 6) > 0) { const ex = W / 2 + g.measureText(l).width / 2 + 8 * u; g.fillStyle = '#6ee7ff'; g.fillRect(ex, y - fs2 / 2, 4 * u, fs2); g.fillStyle = '#fff'; }
+    y += lh2;
   });
-  // progress bar
-  g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(150, H - 40, W - 220, 5);
-  g.fillStyle = '#fff'; g.fillRect(150, H - 40, (W - 220) * ((t * .02) % 1), 5);
+  const px0 = x0, pw = W - 2 * x0 + (port ? 0 : 80 * u);
+  g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(px0, H - (port ? 120 : 40) * u, pw, 5 * u);
+  g.fillStyle = '#fff'; g.fillRect(px0, H - (port ? 120 : 40) * u, pw * ((t * .02) % 1), 5 * u);
 }
 const BUB = $$('.bub').map(b => ({ at: +b.dataset.at, label: b.querySelector('small').textContent, src: b.querySelector('b').textContent, vi: b.querySelector('em').textContent }));
 function drawTalk(cv, t, p) {
@@ -1457,7 +1468,7 @@ function drawStory(t, p, dark) {
   const pm = ss(.47, .55, p), A = POSES[0], B = POSES[3];
   for (let i = 0; i < 4; i++) { sHand.c[i] = lerp(A.c[i], B.c[i], pm); sHand.a[i] = lerp(A.a[i], B.a[i], pm); }
   sHand.th = lerp(A.th, B.th, pm); sHand.tz = lerp(A.tz, B.tz, pm); sHand.tc = lerp(A.tc, B.tc, pm);
-  const S = Math.min(W * .3, H * .27);
+  const S = Math.min(W * (W < 700 ? .42 : .3), H * .27);
   const hp = kHand > 0 ? projHand(sHand, reduce ? 0 : Math.sin(t * .5) * .35, -.12, S, cx, H * .36 + S * 1.23) : null;
   if (dark > .05) {
     const glow = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * .5);
