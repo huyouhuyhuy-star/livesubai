@@ -1,0 +1,1757 @@
+<title>LiveSub AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Unbounded:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<style>
+/* Layout: cinematic scroll film — a 3D flight through a night sky, a dawn into white, alternating black/white chapters the chrome logo star travels between, then the working app. */
+:root{
+  --void:#000000; --night:#0b0b10; --navy:#0c0f2e;
+  --paper:#ffffff; --soft:#f5f5f7; --white:#ffffff; --ink:#1d1d1f; --ink-2:#55576a; --ink-3:#86889b; --line:#e2e1ea;
+  --d-ink:#f5f5f7; --d-ink-2:rgba(232,234,246,.66); --d-ink-3:rgba(232,234,246,.42); --d-line:rgba(255,255,255,.11);
+  --c1:#6ee7ff; --c2:#6b7bff; --c3:#b27cff; --c4:#ff8ad8;
+  --app-card:rgba(255,255,255,.55); --app-line:#ecdfe7; --app-ink:#2a2b3f; --app-sub:#6f6c83; --app-accent:#4d58c8;
+  --display:"Unbounded","Be Vietnam Pro",system-ui,sans-serif;
+  --body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Roboto Mono",ui-monospace,Menlo,Consolas,monospace;
+  --gutter:max(16px,4vw);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+main{overflow-x:clip}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--c2);outline-offset:3px}
+@property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes spin{to{--ang:360deg}}
+
+.eyebrow{font:500 11.5px/1.4 var(--mono);letter-spacing:.18em;text-transform:uppercase;margin:0;color:var(--c2)}
+.dark .eyebrow{color:var(--c1)}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1,h2{font-family:var(--display);font-weight:600;letter-spacing:-.025em}
+h2{font-size:clamp(1.85rem,4.6vw,3.9rem);line-height:1.08}
+h3{font-family:var(--body);font-size:1.12rem;font-weight:700;letter-spacing:-.01em}
+.lede{font-size:clamp(1rem,1.45vw,1.2rem);color:var(--ink-2);max-width:54ch;margin:0;line-height:1.62}
+.dark .lede{color:var(--d-ink-2)}
+.iri{background:linear-gradient(100deg,var(--c1),var(--c2) 34%,var(--c3) 64%,var(--c4));-webkit-background-clip:text;background-clip:text;color:transparent}
+.light .iri{background:linear-gradient(100deg,#1fb6e0,#4b5cf0 34%,#8b4ff0 64%,#e0479f);-webkit-background-clip:text;background-clip:text}
+.dark{background:var(--void);color:var(--d-ink)}
+.light{background:var(--paper);color:var(--ink)}
+
+/* ---------- Liquid glass ---------- */
+.glass{
+  --g-fg:#fff; --g-bg1:rgba(255,255,255,.2); --g-bg2:rgba(255,255,255,.04); --g-rim:rgba(255,255,255,.75); --g-shadow:rgba(0,0,0,.45);
+  position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:.55em;
+  padding:.95em 1.55em;border:0;border-radius:999px;cursor:pointer;text-decoration:none;white-space:nowrap;
+  font:600 15px/1 var(--body);color:var(--g-fg);
+  background:linear-gradient(180deg,var(--g-bg1),var(--g-bg2));
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -12px 20px -14px rgba(255,255,255,.45),0 14px 34px -16px var(--g-shadow);
+  transition:transform .55s cubic-bezier(.2,1.5,.3,1);-webkit-tap-highlight-color:transparent;
+}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;background:radial-gradient(140px circle at var(--mx,50%) var(--my,-30%),rgba(255,255,255,.5),rgba(255,255,255,0) 65%);opacity:.45;transition:opacity .3s}
+.glass:hover::before{opacity:1}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;background:linear-gradient(140deg,var(--g-rim),rgba(255,255,255,.04) 38%,rgba(255,255,255,.04) 62%,var(--g-rim));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.glass:hover{transform:translateY(-1px) scale(1.035)}
+.glass:active{transform:scale(.94);transition-duration:.12s}
+.glass.is-pop{animation:jelly .6s cubic-bezier(.2,1.4,.3,1)}
+@keyframes jelly{0%{transform:scale(.93,.97)}35%{transform:scale(1.06,.94)}65%{transform:scale(.98,1.04)}100%{transform:scale(1)}}
+.glass--light{--g-fg:var(--ink);--g-bg1:rgba(255,255,255,.85);--g-bg2:rgba(255,255,255,.5);--g-rim:#fff;--g-shadow:rgba(40,40,90,.28)}
+.glass--iri{--g-bg1:rgba(120,135,255,.85);--g-bg2:rgba(80,70,220,.7);--g-shadow:rgba(90,90,255,.55)}
+.glass--iri::before{background:radial-gradient(160px circle at var(--mx,50%) var(--my,-30%),rgba(140,240,255,.7),rgba(255,140,220,.25) 45%,rgba(255,255,255,0) 70%);opacity:.8}
+.glass--sm{padding:.68em 1.1em;font-size:13.5px}
+.glass svg{width:1.1em;height:1.1em;flex:none}
+
+/* ---------- Nav ---------- */
+.nav{position:fixed;left:0;right:0;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:calc(env(safe-area-inset-top,0px) + 12px) var(--gutter) 12px;pointer-events:none}
+.nav>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:9px;font:600 15px/1 var(--display);letter-spacing:-.01em;color:#fff;text-decoration:none;transition:color .35s}
+.brand svg{width:24px;height:24px}
+.nav-links{display:none;gap:4px;padding:5px;border-radius:999px;background:rgba(20,22,40,.35);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);transition:background .35s,box-shadow .35s}
+.nav-links a{padding:7px 13px;border-radius:999px;font-size:13px;color:rgba(255,255,255,.82);text-decoration:none;transition:background .2s,color .35s}
+.nav-links a:hover{background:rgba(255,255,255,.12)}
+@media (min-width:980px){.nav-links{display:flex}}
+.nav[data-tone="light"] .brand{color:var(--ink)}
+.nav[data-tone="light"] .nav-links{background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.nav[data-tone="light"] .nav-links a{color:var(--ink-2)}
+.nav[data-tone="light"] .nav-links a:hover{background:rgba(0,0,0,.05)}
+.nav[data-tone="light"] .glass{--g-fg:var(--ink);--g-bg1:rgba(255,255,255,.85);--g-bg2:rgba(255,255,255,.5);--g-shadow:rgba(40,40,90,.22)}
+
+/* ---------- 3D overlay ---------- */
+#gl{position:fixed;inset:0;width:100vw;height:100vh;z-index:40;pointer-events:none}
+.edge{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:var(--edge,0)}
+.edge::before{content:"";position:absolute;inset:0;padding:3px;background:conic-gradient(from var(--ang),#ff9a5a,#ff5fa2,#b06bff,#5f8bff,#4fe3ff,#8dffb8,#ff9a5a);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 5s linear infinite}
+.edge::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 40px 4px rgba(176,107,255,.3),inset 0 0 90px 10px rgba(79,227,255,.14)}
+.edge.off::before{animation-play-state:paused}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;height:340vh;background:#05061a}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;color:#fff;background:linear-gradient(180deg,#02030a 0%,#0b1036 50%,#2a2170 86%,#3a2a7c 100%)}
+#space{position:absolute;inset:0;width:100%;height:100%;display:block}
+.vign{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 80% at 50% 40%,rgba(0,0,0,0) 50%,rgba(2,3,10,.55) 100%)}
+.anchor{position:absolute;aspect-ratio:1;pointer-events:none}
+.hero-anchor{left:50%;top:34%;width:clamp(150px,40vw,260px);transform:translate(-50%,-50%)}
+.rest{position:absolute;left:var(--gutter);right:var(--gutter);top:50%;transform:translateY(-50%);display:grid;justify-items:center;gap:16px;text-align:center;opacity:var(--rest,1)}
+.rest .eyebrow{color:rgba(190,205,255,.85)}
+.rest p.big{margin:0;font:500 clamp(1.4rem,3.4vw,2.4rem)/1.2 var(--display);letter-spacing:-.02em;color:#fff}
+.hint{display:flex;flex-direction:column;align-items:center;gap:10px;font:500 11px/1 var(--mono);letter-spacing:.18em;color:rgba(255,255,255,.55);margin-top:18px}
+.hint i{width:1px;height:46px;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.8));animation:drop 2s ease-in-out infinite;transform-origin:top}
+@keyframes drop{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+.copy{position:absolute;left:var(--gutter);right:var(--gutter);bottom:calc(env(safe-area-inset-bottom,0px) + 7svh);display:grid;justify-items:center;gap:16px;text-align:center;opacity:var(--copy,0);filter:blur(calc((1 - var(--copy,0)) * 12px));transform:translateY(calc((1 - var(--copy,0)) * 30px));pointer-events:none}
+.copy[data-live="1"]{pointer-events:auto}
+.copy h1{font-size:clamp(1.95rem,5.6vw,4.6rem);line-height:1.08}
+.copy h1 span{display:block;padding-bottom:.08em}
+.copy p{margin:0;color:rgba(235,238,255,.8);font-size:clamp(.95rem,1.3vw,1.12rem)}
+.row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.fallback-star{display:none;position:absolute;left:50%;top:34%;width:clamp(140px,34vw,220px);transform:translate(-50%,-50%);filter:drop-shadow(0 0 40px rgba(140,180,255,.5))}
+html.no-gl .fallback-star{display:block}
+@media (max-height:720px){.hero-anchor,.fallback-star{top:30%;width:clamp(120px,32vw,190px)}.copy{bottom:5svh;gap:12px}}
+
+.dawn{position:relative;height:80vh;background:linear-gradient(180deg,#3a2a7c 0%,#7c63b6 26%,#cdb8e2 56%,#ece6f2 80%,var(--paper) 100%)}
+.statement{position:relative;padding:4vh var(--gutter) clamp(90px,16vh,170px);background:var(--paper)}
+.statement p{max-width:1080px;margin:0 auto;font:500 clamp(1.5rem,3.6vw,3rem)/1.32 var(--display);letter-spacing:-.02em;color:var(--ink)}
+.statement p span{opacity:var(--o,.16);transition:opacity .25s}
+.who{max-width:1080px;margin:40px auto 0;display:flex;flex-wrap:wrap;gap:10px}
+.who span{padding:9px 15px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--ink-2)}
+
+/* ---------- Chapter shell ---------- */
+.pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,3.4vh,40px);padding-inline:var(--gutter)}
+.head{width:100%;max-width:1040px;margin-inline:auto;display:grid;gap:14px}
+.head.center{text-align:center;justify-items:center}
+
+/* ---------- Chapter 1: live subtitles ---------- */
+.live{position:relative;height:250vh}
+.dev-wrap{width:min(1120px,100%,calc((100svh - 330px) * 2.1));margin-inline:auto;perspective:1900px}
+.device{position:relative;transform-style:preserve-3d;transform-origin:50% 80%}
+html.no-gl .device{transform:rotateX(calc(var(--tilt,60) * 1deg)) scale(var(--ds,.84))}
+html.gl .frame,html.gl .tphone{visibility:hidden}
+.device-glow{position:absolute;inset:-2%;border-radius:8%/16%;background:conic-gradient(from var(--ang),#ff9a5a,#ff5fa2,#b06bff,#5f8bff,#4fe3ff,#8dffb8,#ff9a5a);filter:blur(34px);opacity:calc(var(--glow,0) * .8);animation:spin 7s linear infinite}
+.pshadow{position:absolute;left:8%;right:8%;bottom:-9%;height:14%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.32),rgba(0,0,0,0));opacity:var(--psh,0);filter:blur(6px);pointer-events:none}
+.tshadow{left:50%;right:auto;width:min(46%,320px);transform:translateX(-50%);bottom:-6%;height:9%;background:radial-gradient(closest-side,rgba(120,140,255,.3),rgba(0,0,0,0))}
+
+/* ---------- Language interlude ---------- */
+.langs{position:relative;padding-block:clamp(90px,16vh,180px);background:#000;color:#fff;overflow:hidden;display:grid;gap:clamp(4px,1.4vh,14px)}
+.lrow{white-space:nowrap;font:600 clamp(2.8rem,10.5vw,9.5rem)/1.08 var(--display);letter-spacing:-.04em;will-change:transform}
+.lrow.out{color:transparent;-webkit-text-stroke:1.4px rgba(255,255,255,.32)}
+.lrow .iri{padding-bottom:.08em}
+.lcap{padding-inline:var(--gutter);max-width:900px;margin:clamp(28px,5vh,48px) auto 0;text-align:center;color:var(--d-ink-2);font-size:clamp(1rem,1.5vw,1.2rem)}
+.lcap b{color:#fff;font-weight:600}
+.frame{position:relative;border-radius:clamp(24px,4.6vw,52px);padding:clamp(7px,1.15vw,14px);background:linear-gradient(145deg,#3a3c48,#121318 40%,#24252d);box-shadow:inset 0 0 0 1.5px #4b4d5a,0 40px 80px -40px rgba(10,10,40,.6)}
+.frame::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from var(--ang),#ff9a5a,#ff5fa2,#b06bff,#5f8bff,#4fe3ff,#8dffb8,#ff9a5a);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:var(--glow,0);animation:spin 7s linear infinite}
+.screen{position:relative;aspect-ratio:19.5/9;border-radius:clamp(18px,3.6vw,40px);overflow:hidden;background:#05060f}
+#bokeh{position:absolute;inset:0;width:100%;height:100%;display:block}
+.punch{position:absolute;left:2.6%;top:50%;width:1.6%;aspect-ratio:1;border-radius:50%;background:#000;transform:translateY(-50%);box-shadow:0 0 0 1.5px #1c1d24}
+.vid-top{position:absolute;left:6%;right:4%;top:6%;display:flex;justify-content:space-between;gap:8px}
+.chip-d{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:rgba(5,7,20,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font:500 10.5px/1 var(--mono);letter-spacing:.1em}
+.chip-d i{width:6px;height:6px;border-radius:50%;background:#ff4d63;box-shadow:0 0 0 3px rgba(255,77,99,.25)}
+.sub{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);width:min(80%,640px);padding:.62em 1.1em .72em;border-radius:14px;background:rgba(8,10,28,.6);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);text-align:center;color:#fff;display:grid;gap:2px}
+.sub-src{font-size:clamp(9.5px,1.2vw,13px);color:rgba(255,255,255,.62);min-height:1.4em}
+.sub-vi{font-weight:600;font-size:clamp(12.5px,2vw,21px);line-height:1.35;min-height:1.35em}
+.caret::after{content:"";display:inline-block;width:2px;height:1em;margin-left:3px;vertical-align:-.12em;background:var(--c1);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.live-anchor{right:0;top:0;width:clamp(70px,13vw,124px);transform:translate(42%,-48%)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,3vw,40px);width:100%;max-width:980px;margin-inline:auto;text-align:center}
+.stats div{display:grid;gap:4px;min-width:0}
+.stats b{font:600 clamp(1.3rem,3vw,2.2rem)/1.1 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stats span{font-size:clamp(11.5px,1.2vw,14px);color:var(--ink-3);line-height:1.35}
+@media (max-width:640px){.live .lede{font-size:.95rem}.live-anchor{transform:translate(18%,-62%)}}
+
+/* ---------- Chapter 2: conversation ---------- */
+.talk{position:relative;height:320vh;background:#000}
+.orbit{position:relative;height:min(56svh,640px);width:100%;max-width:1000px;margin-inline:auto}
+.tphone{position:absolute;left:50%;top:50%;height:100%;aspect-ratio:1/2.06;transform:translate(-50%,-50%);border-radius:14%/6.6%;padding:3%;background:linear-gradient(145deg,#3b3d4a,#111217 45%,#2a2b33);box-shadow:inset 0 0 0 1.5px #4e505d,0 40px 70px -30px rgba(0,0,0,.9)}
+.tscreen{position:relative;height:100%;border-radius:12%/5.6%;overflow:hidden;background:linear-gradient(180deg,#0d1030,#06071a);display:flex;flex-direction:column;gap:5%;padding:17% 7% 7%;font-size:clamp(8px,1.4svh,11.5px);color:#e9ebfa}
+.tscreen::before{content:"";position:absolute;left:50%;top:2.8%;width:6%;aspect-ratio:1;border-radius:50%;background:#000;transform:translateX(-50%)}
+.t-head{display:flex;align-items:center;gap:6px;font-weight:700;font-size:1.15em}
+.t-head i{width:.6em;height:.6em;border-radius:50%;background:#34d399;box-shadow:0 0 0 .25em rgba(52,211,153,.2)}
+.wave{display:flex;align-items:center;gap:3%;height:7%}
+.wave span{flex:1;height:30%;border-radius:4px;background:linear-gradient(180deg,var(--c1),var(--c3));animation:wv 1s ease-in-out infinite}
+@keyframes wv{50%{height:100%}}
+.bubs{display:flex;flex-direction:column;gap:5%;flex:1}
+.bub{padding:.8em .9em;border-radius:1.1em;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);opacity:0;transform:translateY(12px) scale(.96);transition:opacity .5s,transform .6s cubic-bezier(.2,1.3,.3,1)}
+.bub.on{opacity:1;transform:none}
+.bub small{display:block;color:rgba(233,235,250,.5);font-size:.86em;margin-bottom:.2em}
+.bub b{display:block;font-weight:500;line-height:1.35}
+.bub em{display:flex;align-items:center;gap:.4em;margin-top:.5em;font-style:normal;font-weight:600;color:#9fe9ff;line-height:1.35}
+.talk-anchor{left:0;top:6%;width:clamp(58px,11vw,98px);transform:translate(-64%,0)}
+.steps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;width:100%;max-width:1000px;margin-inline:auto}
+.step{display:flex;align-items:center;gap:10px;padding:10px 16px 10px 10px;border-radius:999px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--d-line);color:var(--d-ink-3);font-size:14px;transition:all .4s}
+.step b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.08);font:500 12px/1 var(--mono)}
+.step.on{color:#fff;box-shadow:inset 0 0 0 1px rgba(110,231,255,.45),0 0 30px -10px rgba(110,231,255,.5)}
+.step.on b{background:linear-gradient(135deg,var(--c1),var(--c3));color:#05061a}
+.consent{margin:0;text-align:center;font-size:12.5px;color:var(--d-ink-3)}
+@media (max-width:640px){.step:not(.on){display:none}.talk .lede{display:none}}
+
+/* ---------- Chapter 3: sign language ---------- */
+.sign{position:relative;padding-block:clamp(100px,16vh,180px);padding-inline:var(--gutter);background:#fff}
+.sign-grid{position:relative;max-width:1140px;margin-inline:auto;display:grid;gap:48px;align-items:center}
+@media (min-width:920px){.sign-grid{grid-template-columns:1fr 1fr}}
+.sign-text{display:grid;gap:20px;min-width:0}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.facts div{padding:16px;border-radius:20px;background:var(--soft);display:grid;gap:4px;min-width:0}
+.facts b{font:600 1.25rem/1.1 var(--display);color:var(--ink)}
+.facts span{font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.note{margin:0;padding:16px 18px;border-radius:18px;background:rgba(107,123,255,.06);box-shadow:inset 0 0 0 1px rgba(107,123,255,.2);font-size:14px;color:var(--ink-2)}
+.note b{display:block;font:500 11px/1.4 var(--mono);letter-spacing:.14em;color:#5a46d6;margin-bottom:4px}
+.hud-col{display:grid;gap:16px;justify-items:center;min-width:0}
+.hud{position:relative;width:100%;max-width:460px;aspect-ratio:4/5}
+.hud-in{position:absolute;inset:0;border-radius:32px;overflow:hidden;background:radial-gradient(90% 70% at 50% 40%,#151a46 0%,#05060f 72%);box-shadow:inset 0 0 0 1px rgba(110,231,255,.18),0 50px 90px -40px rgba(20,20,60,.55),0 20px 40px -24px rgba(0,0,0,.4)}
+.hud-in canvas{position:absolute;inset:0;width:100%;height:100%}
+.grid-floor{position:absolute;left:-20%;right:-20%;bottom:-8%;height:46%;background-image:linear-gradient(rgba(110,231,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,255,.16) 1px,transparent 1px);background-size:34px 34px;transform:perspective(380px) rotateX(64deg);-webkit-mask:linear-gradient(180deg,transparent,#000 70%);mask:linear-gradient(180deg,transparent,#000 70%)}
+.hud-tag{position:absolute;left:18px;right:18px;top:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font:500 10.5px/1.4 var(--mono);letter-spacing:.12em;color:rgba(160,220,255,.7)}
+.hud-tag span:last-child{text-align:right}
+.hud-res{position:absolute;left:18px;right:18px;bottom:18px;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:20px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.08);color:#fff}
+.hud-res .txt{flex:1;min-width:0}
+.hud-res small{display:block;font-size:12px;color:var(--d-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-res b{display:block;font:600 1.15rem/1.3 var(--display);letter-spacing:-.01em}
+.conf{display:block;height:3px;border-radius:2px;background:rgba(255,255,255,.12);margin-top:8px;overflow:hidden}
+.conf i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c1),var(--c3))}
+.say{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;position:relative;flex:none}
+.say svg{width:19px;height:19px}
+.say.ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--c1);animation:ring .9s ease-out 2}
+@keyframes ring{from{transform:scale(1);opacity:1}to{transform:scale(1.9);opacity:0}}
+.sign-anchor{left:0;top:0;width:clamp(58px,11vw,104px);transform:translate(-36%,-42%)}
+.poses{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:460px}
+.pose{padding:8px 13px;border-radius:999px;border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--line);font-size:13px;color:var(--ink-2);cursor:pointer;transition:all .25s}
+.pose:hover{color:var(--ink)}
+.pose.on{background:var(--ink);color:#fff;box-shadow:none}
+@media (max-width:640px){.sign-anchor{transform:translate(-14%,-56%)}.facts b{font-size:1.05rem}}
+
+/* ---------- Story: silence → hands → voice ---------- */
+.story{position:relative;height:680vh;background:#fff}
+.story-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:rgb(var(--sbg,255,255,255));color:rgb(var(--sfg,29,29,31))}
+#storyCv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.story-eye{position:absolute;left:var(--gutter);top:calc(env(safe-area-inset-top,0px) + 78px);margin:0;font:500 11.5px/1.4 var(--mono);letter-spacing:.18em;opacity:.5}
+.sline{position:absolute;left:var(--gutter);right:var(--gutter);top:16%;margin:0 auto;max-width:1000px;text-align:center;font:600 clamp(1.5rem,4vw,3.5rem)/1.2 var(--display);letter-spacing:-.025em;text-wrap:balance;opacity:var(--o,0);transform:translateY(calc((1 - var(--o,0)) * 18px));filter:blur(calc((1 - var(--o,0)) * 8px));pointer-events:none}
+.sline small{display:block;margin-top:.9em;font:400 clamp(.95rem,1.4vw,1.15rem)/1.6 var(--body);letter-spacing:0;opacity:.6}
+.sline.mid{top:50%;translate:0 -50%}
+.story-say{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 9svh);display:flex;justify-content:center;opacity:var(--o,0);pointer-events:none}
+.story-say[data-on="1"]{pointer-events:auto}
+@media (max-width:640px){.sline{top:13%}}
+
+/* ---------- How it works ---------- */
+.how{position:relative;padding-block:clamp(100px,15vh,170px);padding-inline:var(--gutter);background:#000;color:var(--d-ink)}
+.how-in{max-width:1140px;margin-inline:auto;display:grid;gap:clamp(36px,6vh,64px)}
+.flow{display:grid;grid-template-columns:1fr;gap:0;align-items:stretch}
+@media (min-width:900px){.flow{grid-template-columns:1fr 56px 1fr 56px 1.15fr 56px 1fr;align-items:center}}
+.node{position:relative;display:grid;gap:8px;padding:22px;border-radius:24px;background:#0e0e13;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);min-width:0}
+.node .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.07);color:#fff}
+.node .ic svg{width:22px;height:22px}
+.node b{font-size:15.5px}
+.node small{color:var(--d-ink-3);font-size:13px;line-height:1.45}
+.node-ai{background:radial-gradient(120% 90% at 50% 0%,#1b2060,#07081a 70%);color:#fff;box-shadow:0 30px 70px -30px rgba(100,110,255,.6),inset 0 0 0 1px rgba(110,231,255,.3);padding-top:116px;text-align:center;justify-items:center}
+.node-ai small{color:var(--d-ink-2)}
+.ai-anchor{left:50%;top:18px;width:84px;transform:translateX(-50%)}
+.link{position:relative;height:36px;width:2px;margin-inline:auto;background:rgba(255,255,255,.12);overflow:hidden}
+.link i{position:absolute;left:0;top:-40%;width:100%;height:40%;background:linear-gradient(180deg,rgba(107,123,255,0),#6b7bff);animation:pulseY 1.6s linear infinite}
+@keyframes pulseY{to{top:100%}}
+@media (min-width:900px){.link{height:2px;width:100%;margin:0}.link i{top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,rgba(107,123,255,0),#6b7bff);animation:pulseX 1.6s linear infinite}@keyframes pulseX{to{left:100%}}}
+.priv{display:grid;gap:14px}
+@media (min-width:760px){.priv{grid-template-columns:repeat(3,1fr)}}
+.priv div{padding:22px;border-radius:22px;background:#0e0e13;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);display:grid;gap:6px}
+.priv b{font:600 1.05rem/1.3 var(--display);letter-spacing:-.01em}
+.priv span{color:var(--d-ink-2);font-size:14px}
+
+/* ---------- Dictionary ---------- */
+.dict{position:relative;padding-block:clamp(90px,14vh,160px);padding-inline:var(--gutter);background:var(--white);overflow:hidden}
+.aurora{position:absolute;inset:0;pointer-events:none;background:radial-gradient(40% 50% at 12% 60%,rgba(107,123,255,.14),rgba(255,255,255,0)),radial-gradient(35% 45% at 88% 35%,rgba(255,138,216,.12),rgba(255,255,255,0)),radial-gradient(30% 40% at 60% 92%,rgba(110,231,255,.14),rgba(255,255,255,0))}
+.dict-in{position:relative;max-width:1100px;margin-inline:auto;display:grid;gap:36px}
+.dict-grid{display:grid;gap:20px;align-items:start}
+@media (min-width:900px){.dict-grid{grid-template-columns:1.15fr 1fr}}
+.seg{display:inline-flex;gap:4px;padding:5px;border-radius:999px;background:rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px var(--line);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.seg .glass{--g-bg1:rgba(255,255,255,0);--g-bg2:rgba(255,255,255,0);--g-fg:var(--ink-2);box-shadow:none}
+.seg .glass::after{opacity:0}
+.seg .glass[aria-pressed="true"]{--g-bg1:#1d1d1f;--g-bg2:#1d1d1f;--g-fg:#fff;box-shadow:0 8px 20px -10px rgba(0,0,0,.5)}
+.subcard{position:relative;overflow:hidden;border-radius:26px;padding:clamp(20px,3vw,32px);background:linear-gradient(160deg,#0f1336,#05061a 80%);color:#fff;display:grid;gap:14px;min-width:0;box-shadow:0 30px 60px -36px rgba(20,20,80,.7)}
+.subcard .eyebrow{color:var(--c1)}
+.subsrc{font-size:clamp(1.15rem,2.4vw,1.6rem);line-height:1.75;font-weight:500}
+.tok{all:unset;display:inline-block;cursor:pointer;border-radius:8px;padding:0 .12em;line-height:1.35;background-image:linear-gradient(90deg,var(--c1),var(--c3)),linear-gradient(90deg,rgba(110,231,255,.2),rgba(178,124,255,.26));background-size:0% 3px,0% 38%;background-position:0 100%,0 96%;background-repeat:no-repeat;transition:background-size .9s cubic-bezier(.65,0,.2,1) var(--d,0s),background-color .2s,color .2s}
+.drawn .tok{background-size:100% 3px,100% 38%;animation:tokpop .6s cubic-bezier(.2,1.5,.3,1) calc(var(--d,0s) + .75s) both}
+@keyframes tokpop{40%{transform:translateY(-4px);text-shadow:0 0 18px rgba(110,231,255,.75)}}
+.subvi b{background-image:linear-gradient(90deg,var(--c1),var(--c3));background-size:0% 2px;background-position:0 100%;background-repeat:no-repeat;transition:background-size .8s cubic-bezier(.65,0,.2,1) var(--d,0s)}
+.drawn .subvi b{background-size:100% 2px}
+.subcard::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(100deg,rgba(255,255,255,0) 30%,rgba(160,220,255,.13) 50%,rgba(255,255,255,0) 70%);transform:translateX(-110%)}
+.subcard.drawn::after{animation:sweep 1.8s cubic-bezier(.4,0,.2,1) .15s}
+@keyframes sweep{to{transform:translateX(110%)}}
+.tok:hover{background-color:rgba(110,231,255,.15)}
+.tok.on{background-color:#fff;color:#0d1030}
+.tok:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+.subvi{color:rgba(255,255,255,.75);font-size:15px;border-top:1px solid rgba(255,255,255,.12);padding-top:14px;margin:0}
+.subvi b{color:#fff}
+.defcard{position:relative;border-radius:26px;padding:clamp(20px,3vw,28px);background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);box-shadow:0 30px 60px -36px rgba(40,40,110,.45),inset 0 0 0 1px rgba(0,0,0,.05),inset 0 1px 0 #fff;display:grid;gap:12px;min-width:0}
+.def-word{font:600 clamp(1.6rem,3.2vw,2.2rem)/1.15 var(--display);letter-spacing:-.02em}
+.def-read{font:500 13px/1.4 var(--mono);color:#6a4fe0}
+.def-pos{display:inline-block;padding:3px 9px;border-radius:999px;background:var(--soft);font-size:12px;color:var(--ink-2);margin-left:8px;vertical-align:middle}
+.def-mean{font-size:17px;font-weight:600;margin:0}
+.def-ex{margin:0;font-size:14px;color:var(--ink-2);padding-left:12px;border-left:2px solid #d6d9ff}
+.def-links{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.def-links span{font-size:12.5px;color:var(--ink-3)}
+.saved{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:36px}
+.saved .lbl{font-size:13px;color:var(--ink-3);margin-right:4px}
+.wchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);font-size:13.5px;animation:pop .45s cubic-bezier(.2,1.4,.3,1)}
+.wchip small{color:var(--ink-3)}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+
+/* ---------- Specs ---------- */
+.specs{padding-block:clamp(90px,14vh,150px);padding-inline:var(--gutter);background:#000;color:var(--d-ink)}
+.specs-in{max-width:1040px;margin-inline:auto;display:grid;gap:36px}
+.spec-list{margin:0;display:grid;border-top:1px solid var(--d-line)}
+.spec-list div{display:grid;grid-template-columns:1fr;gap:4px;padding:18px 0;border-bottom:1px solid var(--d-line)}
+@media (min-width:720px){.spec-list div{grid-template-columns:220px 1fr;gap:24px}}
+.spec-list dt{font-weight:700;font-size:15px}
+.spec-list dd{margin:0;color:var(--d-ink-2);font-size:15px}
+
+/* ---------- Demo ---------- */
+.demo{position:relative;padding-block:clamp(90px,13vh,150px) clamp(70px,10vh,120px);padding-inline:var(--gutter);background:#fff;overflow:hidden}
+.demo-head{position:relative;text-align:center;display:grid;justify-items:center;gap:14px;max-width:760px;margin:0 auto 48px}
+.demo-head h2{display:flex;align-items:center;justify-content:center;gap:.3em;flex-wrap:wrap}
+.anchor-inline{position:relative;display:inline-block;width:1.05em;aspect-ratio:1;flex:none}
+.demo-grid{position:relative;max-width:1060px;margin-inline:auto;display:grid;gap:36px;align-items:center;justify-items:center}
+@media (min-width:900px){.demo-grid{grid-template-columns:auto 1fr;justify-items:stretch}}
+.guide{display:grid;gap:12px;max-width:440px;width:100%;min-width:0}
+.guide p{margin:0;color:var(--ink-2);font-size:15px}
+.tries{display:grid;gap:10px;margin-top:6px}
+.try{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 12px 12px 16px;border-radius:20px;background:var(--soft)}
+.try div{min-width:0}
+.try b{display:block;font-size:14.5px}
+.try span{display:block;font-size:13px;color:var(--ink-3);line-height:1.4}
+
+/* ---------- App replica (faithful to the real app) ---------- */
+.phone{position:relative;width:min(360px,100%);height:min(740px,86svh);min-height:560px;border-radius:50px;padding:10px;background:linear-gradient(145deg,#3a3c48,#121318 40%,#24252d);box-shadow:inset 0 0 0 1.5px #4b4d5a,0 50px 90px -40px rgba(30,20,90,.55)}
+.ap{position:relative;height:100%;border-radius:40px;overflow:hidden;background:linear-gradient(180deg,#fbf1f5,#f5ebf2);color:var(--app-ink);font-size:13.5px;line-height:1.45;display:flex;flex-direction:column}
+.ap-status{display:flex;justify-content:space-between;align-items:center;padding:12px 22px 4px;font-size:12.5px;color:#3b3c4d;flex:none}
+.ap-status .cam{width:12px;height:12px;border-radius:50%;background:#17181f}
+.ap-status .ic{display:flex;gap:5px;align-items:center}
+.ap-status .ic svg{width:14px;height:14px}
+.batt{display:inline-grid;place-items:center;width:22px;height:11px;border:1.2px solid #3b3c4d;border-radius:3px;font-size:7.5px;font-weight:700}
+.ap-head{display:flex;align-items:center;gap:10px;padding:8px 18px 6px;flex:none}
+.ap-head svg{width:34px;height:38px;flex:none}
+.ap-head b{display:block;font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.ap-head small{display:block;color:var(--app-sub);font-size:11.5px}
+.ap-help{margin-left:auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--app-line);background:rgba(255,255,255,.6);color:var(--app-accent);font-weight:700;cursor:pointer;flex:none}
+.ap-body{flex:1;overflow-y:auto;padding:6px 14px 92px;scrollbar-width:none}
+.ap-body::-webkit-scrollbar{display:none}
+.ap-view{display:grid;gap:12px;animation:viewIn .35s ease}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}}
+.ap-title{font-size:21px;font-weight:700;letter-spacing:-.015em;margin:4px 2px 0}
+.ap-sub{color:var(--app-sub);font-size:12px;margin:0 2px}
+.card{border-radius:18px;padding:14px;background:var(--app-card);border:1px solid var(--app-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 18px -14px rgba(120,80,110,.35);display:grid;gap:10px}
+.card-h{display:flex;gap:11px;align-items:center}
+.ico{width:38px;height:38px;border-radius:12px;background:#ece7f4;display:grid;place-items:center;color:var(--app-accent);flex:none}
+.ico svg{width:20px;height:20px}
+.card-h b{display:block;font-size:15px;line-height:1.2}
+.card-h small{display:block;color:var(--app-sub);font-size:11.5px;line-height:1.35}
+.card p{margin:0;color:var(--app-sub);font-size:12.5px}
+.hero-card{background:linear-gradient(135deg,rgba(236,236,250,.9),rgba(232,240,246,.9));padding:18px 16px}
+.hero-card b{display:block;font-size:20px;line-height:1.25;letter-spacing:-.01em}
+.hero-card b span{color:var(--app-accent)}
+.status{background:rgba(232,244,240,.7)}
+.status .srow{display:flex;align-items:center;gap:8px;font-weight:600;color:#2a6b5a}
+.status .srow i{width:8px;height:8px;border-radius:50%;background:#35b37f}
+.status.running .srow i{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(53,179,127,.25)}}
+.status p{color:#4f6f66}
+.segs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.segs.three{grid-template-columns:repeat(3,1fr)}
+.sbtn{padding:11px 6px;border-radius:13px;border:1px solid var(--app-line);background:rgba(255,255,255,.5);color:var(--app-sub);cursor:pointer;font-size:13px;transition:all .2s}
+.sbtn.on{border:1.5px solid var(--app-accent);background:rgba(77,88,200,.08);color:var(--app-accent);font-weight:700}
+.lbl{font-size:12.5px;font-weight:700;margin:2px 0 -2px}
+.btn-main{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border:0;border-radius:14px;background:linear-gradient(90deg,#3e4fd8,#2fb2a6);color:#fff;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 10px 20px -12px rgba(62,79,216,.8);transition:transform .2s}
+.btn-main:active{transform:scale(.97)}
+.btn-main:disabled{opacity:.55;cursor:default}
+.btn-ghost{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:14px;border:1px solid var(--app-line);background:rgba(255,255,255,.5);color:var(--app-accent);font-weight:700;font-size:13.5px;cursor:pointer}
+.btn-main svg,.btn-ghost svg{width:16px;height:16px}
+.preview{border-radius:16px;padding:22px 14px;text-align:center;display:grid;gap:8px;background:linear-gradient(150deg,#16215f,#0c1a4a 60%,#123a66);color:#fff;min-height:150px;align-content:center;transition:background .3s,color .3s}
+.preview small{font:600 10px/1.3 var(--body);letter-spacing:.06em;color:#5ee0c8;text-transform:uppercase}
+.preview .pv-src{font-size:11.5px;opacity:.72;min-height:1.2em}
+.preview .pv-vi{font-weight:700;font-size:16px;line-height:1.4}
+.preview.sz-sm .pv-vi{font-size:13.5px}
+.preview.sz-lg .pv-vi{font-size:19.5px}
+.preview.bg-light{background:linear-gradient(150deg,rgba(255,255,255,.92),rgba(236,240,255,.92));color:#15172c;box-shadow:inset 0 0 0 1px var(--app-line)}
+.preview.bg-light small{color:#2a8f7f}
+.camv{position:relative;height:250px;border-radius:18px;overflow:hidden;background:radial-gradient(100% 80% at 50% 40%,#1a1f4a,#0a0c22)}
+.camv canvas{position:absolute;inset:0;width:100%;height:100%}
+.camv .cap{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 10px;border-radius:12px;background:rgba(18,24,64,.85);color:#fff;font-size:11.5px;font-weight:600;text-align:center}
+.camv .tag{position:absolute;left:10px;top:10px;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.14);color:#fff;font-size:10px;font-weight:600;letter-spacing:.04em}
+.warn{background:rgba(236,236,250,.85)}
+.warn small{font-weight:700;color:var(--app-accent);font-size:11px;letter-spacing:.02em}
+.result b{font-size:20px;line-height:1.25}
+.result .ok{color:#2a8f6a}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .sbtn{padding:7px 10px;font-size:12px;border-radius:999px}
+.list{display:grid;gap:8px}
+.item{padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.65);border:1px solid var(--app-line);display:grid;gap:3px;animation:viewIn .3s ease}
+.item small{color:var(--app-sub);font-size:11px}
+.item .acts{display:flex;gap:12px;justify-content:flex-end}
+.item .acts button,.item .acts a{border:0;background:none;color:var(--app-accent);font-size:12px;font-weight:600;cursor:pointer;padding:2px 0;text-decoration:none}
+.search{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--app-line);background:rgba(255,255,255,.6);font:inherit;color:var(--app-ink)}
+.search:focus{outline:2px solid #c3c8f6}
+.addform{display:grid;gap:8px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.toggle-row b{display:block;font-size:13.5px}
+.toggle-row small{display:block;color:var(--app-sub);font-size:11.5px}
+.sw{position:relative;width:46px;height:28px;border-radius:999px;border:0;background:#e3dbe3;cursor:pointer;flex:none;transition:background .25s}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .3s cubic-bezier(.2,1.4,.3,1)}
+.sw[aria-checked="true"]{background:#4d58c8}
+.sw[aria-checked="true"]::after{transform:translateX(18px)}
+.ap-tabs{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);padding:8px 6px 16px;background:rgba(250,242,246,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--app-line)}
+.ap-tab{border:0;background:none;display:grid;justify-items:center;gap:3px;padding:4px 0;color:#77748a;font-size:11px;cursor:pointer}
+.ap-tab svg{width:22px;height:22px}
+.ap-tab.on{color:var(--app-accent);font-weight:700}
+.ap-sheet{position:absolute;left:10px;right:10px;bottom:78px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 20px 40px -20px rgba(40,30,80,.5);font-size:12.5px;display:grid;gap:6px;animation:viewIn .3s ease;z-index:3}
+.ap-sheet b{font-size:14px}
+.empty{color:var(--app-sub);font-size:12.5px;margin:0}
+
+/* ---------- Footer ---------- */
+.foot{position:relative;padding-block:clamp(90px,14vh,150px) 48px;padding-inline:var(--gutter);text-align:center;background:#000;color:var(--d-ink);display:grid;justify-items:center;gap:20px}
+.foot h2{font-size:clamp(1.7rem,4.4vw,3.4rem)}
+.foot small{color:var(--d-ink-3);font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--d-line);font-size:13px;color:var(--d-ink-2)}
+.badge i{width:7px;height:7px;border-radius:50%;background:#34d399}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .wave span,.hint i,.edge::before,.device-glow,.frame::before,.link i{animation:none!important}
+  .glass,.bub,.statement p span{transition:none}
+  .tok,.subcard::after{animation:none!important}
+}
+</style>
+
+<nav class="nav" id="nav" data-tone="dark">
+  <a class="brand" href="#hero"><span id="navLogo"></span>LiveSub AI</a>
+  <div class="nav-links"><a href="#live">Phụ đề</a><a href="#talk">Hội thoại</a><a href="#sign">Ký hiệu</a><a href="#how">Công nghệ</a><a href="#specs">Thông số</a></div>
+  <a class="glass glass--sm" href="#demo">Dùng thử</a>
+</nav>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="edge off" id="edge" aria-hidden="true"></div>
+
+<main>
+  <section class="hero" id="hero" data-tone="dark">
+    <div class="stage" id="stage">
+      <canvas id="space" aria-hidden="true"></canvas>
+      <div class="vign"></div>
+      <div class="anchor hero-anchor" data-anchor data-rot="0"></div>
+      <div class="fallback-star" id="fallbackStar"></div>
+      <div class="rest">
+        <p class="eyebrow">LiveSub AI</p>
+        <p class="big">Ngước lên bầu trời.</p>
+        <div class="hint"><i></i>CUỘN ĐỂ CẤT CÁNH</div>
+      </div>
+      <div class="copy" id="heroCopy">
+        <h1>Mọi cuộc hội thoại<span class="iri">đều không còn rào cản.</span></h1>
+        <p>Phụ đề AI nổi trên video · Anh, Nhật, Trung → Việt</p>
+        <div class="row">
+          <a class="glass glass--iri" href="#live">Khám phá</a>
+          <a class="glass" href="#demo">Dùng thử ngay <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="dawn" id="dawn" aria-hidden="true"></div>
+
+  <section class="statement light" id="statement" data-tone="light">
+    <p id="stmt">Mỗi ngày, ta xem những video, nghe những bài giảng và gặp những con người nói một ngôn ngữ khác. LiveSub AI đặt bản dịch tiếng Việt ngay trước mắt bạn, đúng lúc họ đang nói.</p>
+    <div class="who"><span>Người xem nội dung nước ngoài</span><span>Người học ngoại ngữ</span><span>Du khách và người đi làm</span><span>Người khiếm thính và gia đình</span></div>
+  </section>
+
+  <section class="langs dark" id="langs" data-tone="dark" aria-label="Ngôn ngữ hỗ trợ">
+    <div class="lrow out" data-dir="-1" aria-hidden="true">English · 日本語 · 中文 · English · 日本語 · 中文 · English · 日本語 · 中文 ·</div>
+    <div class="lrow" data-dir="1" aria-hidden="true"><span class="iri">→ Tiếng Việt → Tiếng Việt → Tiếng Việt → Tiếng Việt → Tiếng Việt</span></div>
+    <div class="lrow out" data-dir="-1" aria-hidden="true">Phụ đề · Hội thoại · Ký hiệu · Từ vựng · Phụ đề · Hội thoại · Ký hiệu · Từ vựng ·</div>
+    <p class="lcap"><b>Ba ngôn ngữ nguồn, một ngôn ngữ đích.</b> Tiếng Anh, tiếng Nhật và tiếng Trung được dịch sang tiếng Việt ngay khi người nói vừa dứt câu.</p>
+  </section>
+
+  <section class="live light" id="live" data-tone="light">
+    <div class="pin">
+      <div class="head center">
+        <p class="eyebrow">01 · Phụ đề AI trực tiếp</p>
+        <h2>Phụ đề nổi trên <span class="iri">mọi màn hình.</span></h2>
+        <p class="lede">Bật một lần rồi mở bất kỳ ứng dụng nào: phim, livestream, bài giảng, cuộc gọi. LiveSub AI nghe âm thanh và hiện bản dịch tiếng Việt ngay trên video, theo thời gian thực.</p>
+      </div>
+      <div class="dev-wrap">
+        <div class="device" id="device">
+          <div class="device-glow"></div>
+          <div class="frame">
+            <div class="screen">
+              <canvas id="bokeh" aria-hidden="true"></canvas>
+              <span class="punch"></span>
+              <div class="vid-top"><span class="chip-d"><i></i>LIVE</span><span class="chip-d" id="liveLang">EN → VI</span></div>
+              <div class="sub"><span class="sub-src" id="liveSrc"></span><span class="sub-vi caret" id="liveVi"></span></div>
+            </div>
+          </div>
+          <div class="pshadow" id="liveShadow"></div>
+          <div class="anchor live-anchor" data-anchor data-rot="14"></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div><b>3 → 1</b><span>Anh, Nhật, Trung sang tiếng Việt</span></div>
+        <div><b>Mọi app</b><span>Phụ đề nổi do Android hiển thị</span></div>
+        <div><b>0</b><span>tệp âm thanh được lưu lại</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="talk dark" id="talk" data-tone="dark">
+    <div class="pin">
+      <div class="head center">
+        <p class="eyebrow">02 · Dịch hội thoại 1:1</p>
+        <h2>Dịch phiên âm 1:1.<br><span class="iri">Thiết bị thông minh hơn.</span></h2>
+        <p class="lede">Micro điện thoại nghe người đối diện, AI dịch sang tiếng Việt, và bản dịch được đọc nhỏ vào tai nghe của bạn.</p>
+      </div>
+      <div class="orbit">
+        <div class="pshadow tshadow" id="talkShadow"></div>
+        <div class="tphone" id="tphone">
+          <div class="tscreen">
+            <div class="t-head"><i></i>Hội thoại 1:1 · Đang nghe</div>
+            <div class="wave" aria-hidden="true"><span></span><span style="animation-delay:-.2s"></span><span style="animation-delay:-.5s"></span><span style="animation-delay:-.1s"></span><span style="animation-delay:-.7s"></span><span style="animation-delay:-.3s"></span><span style="animation-delay:-.6s"></span><span style="animation-delay:-.4s"></span></div>
+            <div class="bubs">
+              <div class="bub" data-at=".14"><small>Tiếng Anh</small><b>Excuse me, is the old quarter far from here?</b><em>Xin lỗi, phố cổ có xa đây không?</em></div>
+              <div class="bub" data-at=".40"><small>Tiếng Nhật</small><b>この電車は空港に行きますか？</b><em>Chuyến tàu này có đi sân bay không?</em></div>
+              <div class="bub" data-at=".64"><small>Tiếng Trung</small><b>这家店的招牌菜是什么？</b><em>Món đặc trưng của quán này là gì?</em></div>
+            </div>
+          </div>
+          <div class="anchor talk-anchor" data-anchor data-rot="-16"></div>
+        </div>
+      </div>
+      <div class="steps" id="steps">
+        <div class="step on"><b>1</b>Micro nghe người đối diện</div>
+        <div class="step"><b>2</b>AI dịch sang tiếng Việt</div>
+        <div class="step"><b>3</b>Bản dịch đọc vào tai nghe</div>
+      </div>
+      <p class="consent">Chỉ dùng khi người đối diện đồng ý.</p>
+    </div>
+  </section>
+
+  <section class="story" id="story" data-tone="light" aria-label="Câu chuyện về ngôn ngữ ký hiệu">
+    <div class="story-pin" id="storyPin">
+      <canvas id="storyCv" aria-hidden="true"></canvas>
+      <p class="story-eye">03 · KÝ HIỆU</p>
+      <p class="sline" data-a="-.05" data-b=".13">Hãy tưởng tượng một ngày<br>không có âm thanh.</p>
+      <p class="sline" data-a=".13" data-b=".26">Không tiếng cười. Không ai gọi tên bạn.<br>Không một lời “con thương mẹ”.</p>
+      <p class="sline" data-a=".26" data-b=".39">Bạn muốn nói thật nhiều,<br>nhưng không ai hiểu.<small>Đó là một ngày rất bình thường của nhiều người khiếm thính.</small></p>
+      <p class="sline" data-a=".42" data-b=".57">LiveSub AI học cách<br><span class="iri">lắng nghe đôi tay.</span></p>
+      <p class="sline" data-a=".6" data-b=".77">Và lần đầu tiên,<br>đôi tay ấy có giọng nói.</p>
+      <p class="sline mid" data-a=".82" data-b=".97">Vì ai cũng xứng đáng<br><span class="iri">được lắng nghe.</span></p>
+      <div class="story-say" id="storySayWrap"><button class="glass glass--iri" id="storySay" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>Nghe đôi tay nói</button></div>
+    </div>
+  </section>
+
+  <section class="sign light" id="sign" data-tone="light">
+    <div class="sign-grid">
+      <div class="sign-text">
+        <p class="eyebrow">Thử ngay · Ký hiệu & Camera</p>
+        <h2>Đôi tay nói. <span class="iri">Điện thoại lắng nghe.</span></h2>
+        <p class="lede">Hướng bàn tay về camera, AI nhận ra dáng tay và đọc tên cử chỉ bằng tiếng Việt. Bạn cũng có thể học từng ký hiệu và luyện tập ngay trên điện thoại, để chính mình bước vào thế giới của người khiếm thính.</p>
+        <div class="facts">
+          <div><b>7</b><span>dáng tay thông dụng nhận diện qua camera</span></div>
+          <div><b>Học</b><span>từng ký hiệu kèm mô tả dễ hiểu</span></div>
+          <div><b>Luyện</b><span>làm theo trước camera, máy kiểm tra ngay</span></div>
+        </div>
+        <p class="note"><b>BẢN THỬ NGHIỆM</b>Hiện AI phân loại 7 dáng tay, chưa phải phiên dịch toàn bộ ngôn ngữ ký hiệu Việt Nam. Đây là bước đầu, và mỗi bản cập nhật sẽ dạy nó thêm.</p>
+      </div>
+      <div class="hud-col">
+        <div class="hud">
+          <div class="hud-in">
+            <div class="grid-floor"></div>
+            <canvas id="bigHand" aria-hidden="true"></canvas>
+            <div class="hud-tag"><span>HAND · 21 ĐIỂM</span><span id="hudFps">THEO DÕI 3D</span></div>
+            <div class="hud-res" aria-live="polite">
+              <div class="txt"><small id="vfKind">Đang nhận diện…</small><b id="vfName">Xin chào</b><span class="conf"><i id="vfBar"></i></span></div>
+              <button class="say" id="sayBtn" aria-label="Đọc tên cử chỉ bằng tiếng Việt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+            </div>
+          </div>
+          <div class="anchor sign-anchor" data-anchor data-rot="10"></div>
+        </div>
+        <div class="poses" id="poses" role="group" aria-label="Chọn cử chỉ"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how dark" id="how" data-tone="dark">
+    <div class="how-in">
+      <div class="head center">
+        <p class="eyebrow">04 · Cách hoạt động</p>
+        <h2>Từ âm thanh đến phụ đề, <span class="iri">trong một nhịp.</span></h2>
+        <p class="lede">Mỗi lần bấm Bắt đầu, ứng dụng tạo một kết nối dịch mới tới máy chủ. Bạn không cần kiểm tra kết nối trước mỗi phiên.</p>
+      </div>
+      <div class="flow">
+        <div class="node"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><b>Âm thanh</b><small>Âm thanh từ ứng dụng đang phát, hoặc micro khi ở chế độ Hội thoại 1:1.</small></div>
+        <div class="link"><i></i></div>
+        <div class="node"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.2 10 4 4 0 0 0 7 18z"/></svg></span><b>Máy chủ LiveSub</b><small>Cloud tự kiểm tra khi mở ứng dụng và chuyển âm thanh đi xử lý.</small></div>
+        <div class="link"><i></i></div>
+        <div class="node node-ai"><span class="anchor ai-anchor" data-anchor data-rot="0"></span><b>AI trên Groq</b><small>Nhận dạng lời nói và dịch sang tiếng Việt.</small></div>
+        <div class="link"><i></i></div>
+        <div class="node"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 13h4M13 13h4M7 16h10"/></svg></span><b>Phụ đề nổi · Giọng đọc</b><small>Hiện trên mọi ứng dụng, hoặc đọc qua tai nghe bằng bộ đọc của Android.</small></div>
+      </div>
+      <div class="priv">
+        <div><b>Không ghi âm</b><span>Ứng dụng không lưu lại tệp âm thanh. Âm thanh chỉ được gửi đi để dịch.</span></div>
+        <div><b>Lịch sử ở trên máy</b><span>Mặc định tắt. Khi bật, lưu tối đa 150 đoạn văn bản gốc và bản dịch trên thiết bị, xóa được mọi lúc.</span></div>
+        <div><b>Tôn trọng người đối diện</b><span>Chế độ Hội thoại 1:1 nhắc bạn chỉ dùng khi người kia đồng ý.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dict light" id="dict" data-tone="light">
+    <div class="dict-in">
+      <div class="head center">
+        <p class="eyebrow">05 · Tra từ & Sổ từ vựng</p>
+        <h2>Gặp từ khó? <span class="iri">Chạm là hiểu.</span></h2>
+        <p class="lede">Chạm vào một từ trong phụ đề để xem nghĩa, phiên âm và mở ngay trong từ điển uy tín. Lưu lại vào sổ từ vựng để ôn sau.</p>
+        <div class="seg" role="group" aria-label="Ngôn ngữ ví dụ" id="dictSeg">
+          <button class="glass glass--sm" data-l="en" aria-pressed="true">Tiếng Anh</button>
+          <button class="glass glass--sm" data-l="ja" aria-pressed="false">Tiếng Nhật</button>
+          <button class="glass glass--sm" data-l="zh" aria-pressed="false">Tiếng Trung</button>
+        </div>
+      </div>
+      <div class="dict-grid">
+        <div class="subcard">
+          <p class="eyebrow">Phụ đề vừa dịch · chạm vào từ được gạch chân</p>
+          <div class="subsrc" id="subSrc" lang="en"></div>
+          <p class="subvi" id="subVi"></p>
+        </div>
+        <div class="defcard" aria-live="polite">
+          <div><span class="def-word" id="dWord"></span><span class="def-pos" id="dPos"></span></div>
+          <div class="def-read" id="dRead"></div>
+          <p class="def-mean" id="dMean"></p>
+          <p class="def-ex" id="dEx"></p>
+          <div class="def-links" id="dLinks"></div>
+          <div><button class="glass glass--iri glass--sm" id="saveWord"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Lưu vào sổ từ vựng</span></button></div>
+        </div>
+      </div>
+      <div class="saved" id="savedRow"><span class="lbl">Sổ từ vựng của bạn:</span><span class="lbl" id="savedEmpty">chưa có từ nào</span></div>
+    </div>
+  </section>
+
+  <section class="specs dark" id="specs" data-tone="dark">
+    <div class="specs-in">
+      <div class="head"><p class="eyebrow">06 · Thông số</p><h2>LiveSub AI, <span class="iri">từng chi tiết.</span></h2></div>
+      <dl class="spec-list">
+        <div><dt>Nền tảng</dt><dd>Android</dd></div>
+        <div><dt>Chế độ dịch</dt><dd>Video / Ứng dụng · Hội thoại 1:1</dd></div>
+        <div><dt>Ngôn ngữ</dt><dd>Tiếng Anh, tiếng Nhật, tiếng Trung → tiếng Việt</dd></div>
+        <div><dt>Hiển thị</dt><dd>Phụ đề nổi trên ứng dụng khác · 3 cỡ chữ (Nhỏ, Vừa, Lớn) · 2 kiểu nền (Tối mờ, Sáng mờ)</dd></div>
+        <div><dt>Giọng đọc</dt><dd>Đọc bản dịch tiếng Việt qua tai nghe bằng bộ đọc văn bản của Android</dd></div>
+        <div><dt>Ký hiệu</dt><dd>Nhận diện 7 dáng tay thông dụng qua camera · Học và luyện tập ký hiệu (thử nghiệm)</dd></div>
+        <div><dt>Học từ vựng</dt><dd>Lịch sử đoạn dịch · Sổ từ vựng có ghi chú · Tra nghĩa trong từ điển uy tín</dd></div>
+        <div><dt>Quyền riêng tư</dt><dd>Không ghi tệp âm thanh · Lịch sử mặc định tắt, tối đa 150 đoạn, lưu trên thiết bị</dd></div>
+        <div><dt>Kết nối</dt><dd>Cloud tự kiểm tra khi mở ứng dụng, tạo kết nối dịch mới mỗi lần bấm Bắt đầu</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="demo light" id="demo" data-tone="light">
+    <div class="demo-head">
+      <p class="eyebrow">07 · Bản dựng tương tác</p>
+      <h2><span class="anchor-inline" data-anchor data-rot="0"></span>Trải nghiệm ngay</h2>
+      <p class="lede">LiveSub AI được dựng lại trong trình duyệt. Bấm thử mọi thứ: đổi chế độ, bắt đầu dịch, xem nhận diện cử chỉ, lưu từ.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="phone">
+        <div class="ap" id="app">
+          <div class="ap-status"><span>0:18</span><span class="cam"></span><span class="ic">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="15" width="3" height="5" rx="1"/><rect x="8" y="11" width="3" height="9" rx="1"/><rect x="13" y="7" width="3" height="13" rx="1"/><rect x="18" y="3" width="3" height="17" rx="1"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg>
+            <span class="batt">37</span></span></div>
+          <div class="ap-head"><span id="apLogo"></span><div><b>LiveSub AI</b><small>Dịch phụ đề thời gian thực</small></div><button class="ap-help" id="apHelp" aria-label="Trợ giúp">?</button></div>
+          <div class="ap-body" id="apBody">
+            <section class="ap-view" data-view="home">
+              <div class="card hero-card"><b>Mọi cuộc hội thoại<br><span>đều không còn rào cản</span></b><p>Phụ đề AI nổi trên video · Anh, Nhật, Trung → Việt</p></div>
+              <div class="card status" data-status><div class="srow"><i></i>Tự động kết nối khi bắt đầu</div><p>Trạng thái: <span data-status-text>Chưa bắt đầu phiên dịch</span></p></div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 13h4M13 13h4M7 16h10"/></svg></span><div><b>Chọn cách dịch</b><small>Bạn có thể thay đổi chế độ trước khi bắt đầu.</small></div></div>
+                <div class="segs"><button class="sbtn on" data-mode="video">Video / Ứng dụng</button><button class="sbtn" data-mode="talk">Hội thoại 1:1</button></div>
+                <p id="modeDesc"></p>
+              </div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><div><b>Ngôn ngữ dịch</b><small>Chọn ngôn ngữ video, dịch sang tiếng Việt.</small></div></div>
+                <div class="lbl">Ngôn ngữ nguồn</div>
+                <div class="segs three"><button class="sbtn on" data-lang="en">Anh</button><button class="sbtn" data-lang="ja">Nhật</button><button class="sbtn" data-lang="zh">Trung</button></div>
+              </div>
+              <button class="btn-main" data-act="startFromHome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>Bắt đầu dịch</button>
+            </section>
+            <section class="ap-view" data-view="live" hidden>
+              <div><h3 class="ap-title">Phiên dịch trực tiếp</h3><p class="ap-sub">Theo dõi hoạt động và bản dịch nhận được</p></div>
+              <div class="card status" data-status><div class="srow"><i></i>Trạng thái phiên</div><p data-status-text style="color:var(--app-ink);font-weight:600">Chưa bắt đầu phiên dịch</p></div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 13h4M13 13h4M7 16h10"/></svg></span><div><b>Xem trước phụ đề nổi</b><small>Nội dung thực tế từ Cloud nếu đã nhận được</small></div></div>
+                <div class="preview sz-md bg-dark" id="pv"><small id="pvTag">Mẫu giao diện · Chưa có bản dịch</small><div class="pv-src" id="pvSrc"></div><div class="pv-vi" id="pvVi">Bản dịch tiếng Việt sẽ xuất hiện ở đây khi AI xử lý xong.</div></div>
+                <p>Trong ứng dụng khác, phụ đề nổi sẽ được hiển thị bởi Android. Khung trên chỉ để xem lại câu gần nhất.</p>
+              </div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h2M7 9v6M10 6v12M13 9v6M16 7v10M19 12h2"/></svg></span><div><b>Điều khiển phiên</b><small>Bạn có thể chuyển sang YouTube sau khi bật dịch.</small></div></div>
+                <button class="btn-main" data-act="start" id="startBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>Bắt đầu / Cấp quyền dịch</button>
+                <button class="btn-ghost" data-act="stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Dừng dịch</button>
+              </div>
+            </section>
+            <section class="ap-view" data-view="sign" hidden>
+              <div><h3 class="ap-title">Ký hiệu & Camera</h3><p class="ap-sub">LiveSub AI · Thử nghiệm nhận diện</p></div>
+              <div class="segs"><button class="sbtn on" data-sub="cam">Camera & luyện tập</button><button class="sbtn" data-sub="learn">Học ký hiệu</button></div>
+              <div class="card warn"><small>BẢN THỬ NGHIỆM · KHÔNG PHẢI PHIÊN DỊCH NNKH</small><p>AI chỉ phân loại 7 dáng tay thông dụng. Không thể suy ra nội dung hội thoại ngôn ngữ ký hiệu Việt Nam từ những dáng tay này.</p></div>
+              <div data-subview="cam" style="display:grid;gap:12px">
+                <div class="camv"><span class="tag">CAMERA MÔ PHỎNG</span><canvas id="appHand" aria-hidden="true"></canvas><div class="cap">Camera đang hoạt động · Hướng bàn tay về phía trước</div></div>
+                <div class="card result"><small style="color:var(--app-sub)">Kết quả AI</small><b id="apRes">Đưa một bàn tay vào khung hình</b><p id="apResSub">Kết quả sẽ hiển thị khi đủ độ tin cậy.</p><button class="btn-ghost" data-act="sayApp">Đọc tên cử chỉ bằng tiếng Việt</button></div>
+                <div class="card"><b style="font-size:15px">Luyện tập với camera</b><p>Chọn một dáng tay rồi đưa vào camera để máy kiểm tra.</p><div class="chips" id="practiceChips"></div><p id="practiceMsg" style="color:var(--app-accent);font-weight:600">Chưa chọn bài tập</p><button class="btn-main" data-act="check" id="checkBtn" disabled>Kiểm tra</button></div>
+              </div>
+              <div data-subview="learn" class="list" hidden id="learnList"></div>
+            </section>
+            <section class="ap-view" data-view="vocab" hidden>
+              <div><h3 class="ap-title">Lịch sử & Từ vựng</h3><p class="ap-sub">Ghi lại đoạn dịch để ôn từ mới. Chỉ lưu trên thiết bị nếu bạn cho phép.</p></div>
+              <input class="search" id="vSearch" type="search" placeholder="Tìm câu hoặc từ đã lưu…" aria-label="Tìm câu hoặc từ đã lưu">
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>Đoạn dịch gần đây</b><small>Chạm Lưu để thêm câu vào sổ từ vựng</small></div></div>
+                <div class="list" id="histList"></div>
+                <button class="btn-ghost" data-act="clearHist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>Xóa lịch sử dịch</button>
+              </div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 5.5C5 4.5 8 4.5 12 6.5c4-2 7-2 9-1V19c-2-1-5-1-9 1-4-2-7-2-9-1zM12 6.5V20"/></svg></span><div><b>Sổ từ vựng của bạn</b><small>Ghi chú và tra nghĩa trong từ điển uy tín</small></div></div>
+                <div class="list" id="wordList"></div>
+                <div class="addform" id="addForm" hidden>
+                  <input class="search" id="newW" placeholder="Từ hoặc cụm từ" aria-label="Từ mới">
+                  <input class="search" id="newM" placeholder="Nghĩa / ghi chú" aria-label="Nghĩa hoặc ghi chú">
+                  <button class="btn-main" data-act="addWord">Lưu từ</button>
+                </div>
+                <button class="btn-ghost" data-act="toggleAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Thêm từ mới</button>
+              </div>
+            </section>
+            <section class="ap-view" data-view="settings" hidden>
+              <div><h3 class="ap-title">Cài đặt</h3><p class="ap-sub">Tùy chỉnh trải nghiệm phù hợp với bạn</p></div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><div><b>Giao diện phụ đề</b><small>Thay đổi kiểu chữ của cửa sổ phụ đề nổi</small></div></div>
+                <div class="lbl">Kích thước chữ</div>
+                <div class="segs three"><button class="sbtn" data-size="sm">Nhỏ</button><button class="sbtn on" data-size="md">Vừa</button><button class="sbtn" data-size="lg">Lớn</button></div>
+                <div class="lbl">Kiểu nền</div>
+                <div class="segs"><button class="sbtn on" data-bg="dark">Tối mờ</button><button class="sbtn" data-bg="light">Sáng mờ</button></div>
+                <div class="preview sz-md bg-dark" id="pv2" style="min-height:0;padding:14px"><div class="pv-vi">Xin chào, đây là phụ đề mẫu.</div></div>
+              </div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><div><b>Lịch sử & quyền riêng tư</b><small>Văn bản dịch chỉ lưu cục bộ</small></div></div>
+                <div class="toggle-row"><div><b>Lưu lịch sử phụ đề</b><small>Mặc định tắt · lưu trên thiết bị</small></div><button class="sw" role="switch" aria-checked="false" data-set="hist" aria-label="Lưu lịch sử phụ đề"></button></div>
+                <p>Không ghi lại tệp âm thanh. Nếu bật, lưu tối đa 150 đoạn văn bản gốc + dịch trên máy. Có thể xóa mọi lúc.</p>
+              </div>
+              <div class="card">
+                <div class="card-h"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h2M7 9v6M10 6v12M13 9v6M16 7v10M19 12h2"/></svg></span><div><b>Dịch hội thoại 1:1</b><small>Nghe lời nói xung quanh bằng micro điện thoại</small></div></div>
+                <div class="toggle-row"><div><b>Đọc bản dịch tiếng Việt thành tiếng</b></div><button class="sw" role="switch" aria-checked="true" data-set="tts" aria-label="Đọc bản dịch thành tiếng"></button></div>
+              </div>
+            </section>
+          </div>
+          <div class="ap-sheet" id="apSheet" hidden><b>Mẹo nhanh</b><span>1. Chọn chế độ và ngôn ngữ ở Trang chủ.<br>2. Bấm Bắt đầu ở tab Trực tiếp rồi mở ứng dụng bạn muốn xem.<br>3. Bật Lưu lịch sử trong Cài đặt để ôn lại từ mới.</span></div>
+          <nav class="ap-tabs" aria-label="Điều hướng ứng dụng">
+            <button class="ap-tab on" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/></svg>Trang chủ</button>
+            <button class="ap-tab" data-go="live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h2M7 9v6M10 6v12M13 9v6M16 7v10M19 12h2"/></svg>Trực tiếp</button>
+            <button class="ap-tab" data-go="sign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6 7-2.5 0-4-1.2-5.2-3L4 13.5a1.5 1.5 0 0 1 2.5-1.6L8 14"/></svg>Ký hiệu</button>
+            <button class="ap-tab" data-go="vocab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 5.5C5 4.5 8 4.5 12 6.5c4-2 7-2 9-1V19c-2-1-5-1-9 1-4-2-7-2-9-1zM12 6.5V20"/></svg>Từ vựng</button>
+            <button class="ap-tab" data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>Cài đặt</button>
+          </nav>
+        </div>
+      </div>
+      <div class="guide">
+        <h3>Thử theo bốn bước</h3>
+        <p>Các nút bên dưới điều khiển trực tiếp bản dựng bên cạnh.</p>
+        <div class="tries">
+          <div class="try"><div><b>Chọn tiếng Nhật</b><span>Đổi ngôn ngữ nguồn ở Trang chủ</span></div><button class="glass glass--light glass--sm" data-try="ja">Chọn</button></div>
+          <div class="try"><div><b>Bắt đầu dịch</b><span>Phụ đề tiếng Việt chạy trong khung xem trước</span></div><button class="glass glass--iri glass--sm" data-try="start">Bắt đầu</button></div>
+          <div class="try"><div><b>Xem nhận diện cử chỉ</b><span>Bàn tay 3D đổi dáng liên tục</span></div><button class="glass glass--light glass--sm" data-try="sign">Mở</button></div>
+          <div class="try"><div><b>Mở sổ từ vựng</b><span>Từ bạn lưu ở phần Tra từ cũng nằm ở đây</span></div><button class="glass glass--light glass--sm" data-try="vocab">Mở</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot dark" data-tone="dark">
+    <span class="badge"><i></i>Ứng dụng Android · đang thử nghiệm</span>
+    <h2>Mọi cuộc hội thoại <span class="iri">đều không còn rào cản.</span></h2>
+    <div class="row"><a class="glass glass--iri" href="#demo">Dùng thử bản demo</a><a class="glass" href="#hero">Về đầu trang</a></div>
+    <small>LiveSub AI · Dịch phụ đề thời gian thực · 2026</small>
+  </footer>
+</main>
+
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ss = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mobile = innerWidth < 700;
+const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1; mouse.ty = e.clientY / innerHeight * 2 - 1; }, { passive: true });
+
+/* ---------- 2D logo (nav, app header, fallback) ---------- */
+const STAR = 'M0,-100 C8,-30 30,-8 100,0 C30,8 8,30 0,100 C-8,30 -30,8 -100,0 C-30,-8 -8,-30 0,-100Z';
+function starSVG(u, bars) {
+  return `<svg viewBox="-130 -130 260 ${bars ? 290 : 260}" aria-hidden="true"><defs>
+  <linearGradient id="sg${u}" x1="-90" y1="-100" x2="90" y2="100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e6fbff"/><stop offset=".3" stop-color="#7fdcff"/><stop offset=".55" stop-color="#6c87ff"/><stop offset=".78" stop-color="#b48bff"/><stop offset="1" stop-color="#ffc0e4"/></linearGradient>
+  <linearGradient id="sw${u}" x1="0" y1="-44" x2="0" y2="-80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9ff0ff"/><stop offset="1" stop-color="#7479ff"/></linearGradient></defs>
+  ${[45, 135, 225, 315].map(a => `<path transform="rotate(${a})" d="M0,-44 L12,-80 L-12,-80 Z" fill="url(#sw${u})"/>`).join('')}
+  <path d="${STAR}" fill="url(#sg${u})"/><path d="${STAR}" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3"/>
+  ${bars ? [-16, 0, 16].map(x => `<rect x="${x - 5}" y="114" width="10" height="30" rx="5" fill="#6c87ff"/>`).join('') : ''}</svg>`;
+}
+$('#navLogo').innerHTML = starSVG('N', false);
+$('#apLogo').innerHTML = starSVG('A', true);
+$('#fallbackStar').innerHTML = starSVG('X', true);
+
+const hasGL = !!window.THREE && (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
+if (!hasGL) { document.documentElement.classList.add('no-gl'); $('#gl').hidden = true; } else document.documentElement.classList.add('gl');
+
+/* ---------- Shared env map ---------- */
+function makeEnv(renderer) {
+  const pm = new THREE.PMREMGenerator(renderer);
+  const s = new THREE.Scene();
+  const g = new THREE.SphereGeometry(50, 48, 24);
+  const pos = g.attributes.position, cols = [], c = new THREE.Color();
+  const top = new THREE.Color(0x3d4570), hor = new THREE.Color(0x15161f), bot = new THREE.Color(0x050507);
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i) / 50;
+    if (y > 0) c.copy(hor).lerp(top, y); else c.copy(hor).lerp(bot, Math.min(1, -y * 2));
+    cols.push(c.r, c.g, c.b);
+  }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  s.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+  const panel = (col, x, y, z, w, h) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m); };
+  panel(new THREE.Color(10, 10, 10), 0, 38, 6, 44, 10);        // overhead softbox
+  panel(new THREE.Color(7, 7, 7.6), -42, 4, 6, 5, 46);        // left strip light
+  panel(new THREE.Color(7, 7, 7.6), 42, 4, 6, 5, 46);         // right strip light
+  panel(new THREE.Color(2.6, 2.7, 3.1), 0, 2, 46, 34, 8);     // front fill
+  panel(new THREE.Color(.4, 2.6, 3.8), -30, -12, -32, 16, 26); // cyan rim
+  panel(new THREE.Color(3.8, .9, 2.6), 30, -8, -32, 16, 26);   // pink rim
+  panel(new THREE.Color(1.6, 1.3, 4), 0, -32, 10, 30, 10);     // violet floor bounce
+  panel(new THREE.Color(6, 6, 6.5), -24, 24, 26, 3, 30);     // diagonal kicker
+  panel(new THREE.Color(5, 5, 6), 26, -18, 30, 3, 26);       // diagonal kicker
+  const tex = pm.fromScene(s, .015).texture; pm.dispose(); return tex;
+}
+function glowTexture(stops) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const g = cv.getContext('2d'), rg = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  stops.forEach(([o, c]) => rg.addColorStop(o, c)); g.fillStyle = rg; g.fillRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
+}
+
+/* ---------- 3D overlay: star + earbuds ---------- */
+let O = null;
+if (hasGL) {
+  const canvas = $('#gl');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.6 : 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.setClearColor(0, 0);
+  const scene = new THREE.Scene(); scene.environment = makeEnv(renderer);
+  const camera = new THREE.PerspectiveCamera(30, 1, 1, 30000);
+  scene.add(new THREE.AmbientLight(0xffffff, .25));
+  const key = new THREE.DirectionalLight(0xffffff, 1.3); key.position.set(-1, 2, 3); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xb27cff, 1.6); rim.position.set(2, -1, -2); scene.add(rim);
+
+  // star
+  const sh = new THREE.Shape();
+  sh.moveTo(0, 1); sh.bezierCurveTo(.08, .3, .3, .08, 1, 0); sh.bezierCurveTo(.3, -.08, .08, -.3, 0, -1);
+  sh.bezierCurveTo(-.08, -.3, -.3, -.08, -1, 0); sh.bezierCurveTo(-.3, .08, -.08, .3, 0, 1);
+  const starGeo = new THREE.ExtrudeGeometry(sh, { depth: .14, bevelEnabled: true, bevelThickness: .13, bevelSize: .055, bevelSegments: 10, curveSegments: 48 });
+  starGeo.center(); starGeo.computeVertexNormals();
+  const chrome = new THREE.MeshPhysicalMaterial({ color: 0xf4f6ff, metalness: 1, roughness: .06, clearcoat: 1, clearcoatRoughness: .02, iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [260, 900], envMapIntensity: 2.6 });
+  const root = new THREE.Group(), spin = new THREE.Group(); root.add(spin); scene.add(root);
+  spin.add(new THREE.Mesh(starGeo, chrome));
+  const wsh = new THREE.Shape(); wsh.moveTo(0, .46); wsh.lineTo(.12, .8); wsh.lineTo(-.12, .8); wsh.closePath();
+  const wGeo = new THREE.ExtrudeGeometry(wsh, { depth: .05, bevelEnabled: true, bevelThickness: .03, bevelSize: .02, bevelSegments: 3 });
+  wGeo.translate(0, -.63, -.04);
+  const wMat = chrome.clone(); wMat.color.set(0xa9e9ff);
+  const wings = [-Math.PI / 4, Math.PI / 4, 3 * Math.PI / 4, -3 * Math.PI / 4].map(a => { const p = new THREE.Group(); p.rotation.z = a; const m = new THREE.Mesh(wGeo, wMat); p.add(m); spin.add(p); return m; });
+  const bMat = chrome.clone(); bMat.color.set(0x8fa0ff);
+  const barGeo = new THREE.CapsuleGeometry(.055, .2, 6, 16);
+  const bars = [-.17, 0, .17].map(x => { const m = new THREE.Mesh(barGeo, bMat); m.position.set(x, -1.32, 0); root.add(m); return m; });
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture([[0, 'rgba(190,225,255,.75)'], [.35, 'rgba(160,140,255,.25)'], [1, 'rgba(160,140,255,0)']]), transparent: true, depthWrite: false, depthTest: false }));
+  glow.renderOrder = -2; root.add(glow);
+
+  // ----- device materials -----
+  const frameMat = new THREE.MeshPhysicalMaterial({ color: 0x9a9da8, metalness: 1, roughness: .24, envMapIntensity: 1.3 });
+  const capMat = new THREE.MeshPhysicalMaterial({ color: 0x030304, metalness: 0, roughness: .1, clearcoat: 1, clearcoatRoughness: .04 });
+  const backMat = new THREE.MeshPhysicalMaterial({ color: 0x2b2f40, metalness: .2, roughness: .5, clearcoat: .5, clearcoatRoughness: .45, envMapIntensity: 1.2 });
+  const lensMat = new THREE.MeshPhysicalMaterial({ color: 0x040507, metalness: .2, roughness: .04, clearcoat: 1, iridescence: .7, iridescenceIOR: 1.6, envMapIntensity: 1.5 });
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0xcdd0da, metalness: 1, roughness: .16, envMapIntensity: 1.3 });
+  const sheenMat = new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: .05, metalness: 0, clearcoat: 1, clearcoatRoughness: .03, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, envMapIntensity: 1.4 });
+  function rr(w, h, r) {
+    const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+    s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.absarc(x + w - r, y + r, r, -Math.PI / 2, 0, false);
+    s.lineTo(x + w, y + h - r); s.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2, false);
+    s.lineTo(x + r, y + h); s.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI, false);
+    s.lineTo(x, y + r); s.absarc(x + r, y + r, r, Math.PI, Math.PI * 1.5, false);
+    return s;
+  }
+  function fitUV(geo, w, h) { const p = geo.attributes.position, uv = geo.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + w / 2) / w, (p.getY(i) + h / 2) / h); uv.needsUpdate = true; }
+  function makePhone(w, h, tex, landscape) {
+    const g = new THREE.Group(), r = Math.min(w, h) * .15, D = .07, bt = .02, bs = .02;
+    const body = new THREE.ExtrudeGeometry(rr(w, h, r), { depth: D, bevelEnabled: true, bevelThickness: bt, bevelSize: bs, bevelSegments: 8, curveSegments: 28 });
+    body.translate(0, 0, -D / 2);
+    g.add(new THREE.Mesh(body, [capMat, frameMat]));
+    const fz = D / 2 + bt, b = Math.min(w, h) * .028, sw = w - 2 * b, sh = h - 2 * b;
+    const sGeo = new THREE.ShapeGeometry(rr(sw, sh, r - b * .9), 28); fitUV(sGeo, sw, sh);
+    const scr = new THREE.Mesh(sGeo, new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })); scr.position.z = fz + .003; g.add(scr);
+    const sheen = new THREE.Mesh(new THREE.ShapeGeometry(rr(w, h, r), 28), sheenMat); sheen.position.z = fz + .006; g.add(sheen);
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(Math.min(w, h) * .022, 24), capMat);
+    if (landscape) hole.position.set(-w / 2 + b + .07, 0, fz + .008); else hole.position.set(0, h / 2 - b - .07, fz + .008);
+    g.add(hole);
+    const back = new THREE.Mesh(new THREE.ShapeGeometry(rr(w, h, r), 28), backMat); back.rotation.y = Math.PI; back.position.z = -fz - .003; g.add(back);
+    // camera plateau with three lenses and a flash
+    const cam = new THREE.Group();
+    const pl = new THREE.ExtrudeGeometry(rr(.42, .42, .11), { depth: .015, bevelEnabled: true, bevelThickness: .012, bevelSize: .012, bevelSegments: 4, curveSegments: 16 });
+    const plate = new THREE.Mesh(pl, [backMat, frameMat]); plate.rotation.y = Math.PI; cam.add(plate);
+    [[-.095, .095], [-.095, -.095], [.095, 0]].forEach(([x, y]) => {
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(.078, .078, .03, 40), ringMat); ring.rotation.x = Math.PI / 2; ring.position.set(x, y, -.03); cam.add(ring);
+      const lens = new THREE.Mesh(new THREE.CircleGeometry(.064, 40), lensMat); lens.rotation.y = Math.PI; lens.position.set(x, y, -.0455); cam.add(lens);
+    });
+    const flash = new THREE.Mesh(new THREE.CircleGeometry(.024, 20), new THREE.MeshStandardMaterial({ color: 0xfff1d6, roughness: .4, emissive: 0x332a10 }));
+    flash.rotation.y = Math.PI; flash.position.set(.11, .135, -.03); cam.add(flash);
+    cam.position.set(w / 2 - .27, h / 2 - .27, -fz - .004);
+    g.add(cam);
+    // side buttons
+    const btn = new THREE.BoxGeometry(.018, .16, .03);
+    [0, 1].forEach(i => {
+      const m = new THREE.Mesh(btn, frameMat);
+      if (landscape) { m.rotation.z = Math.PI / 2; m.position.set(-w / 2 + .45 + i * .24, h / 2 + bs + .004, 0); }
+      else m.position.set(w / 2 + bs + .004, h / 2 - .55 - i * .24, 0);
+      g.add(m);
+    });
+    g.visible = false; scene.add(g);
+    return g;
+  }
+  const maxAni = renderer.capabilities.getMaxAnisotropy();
+  const mkTex = cv => { const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAni; return t; };
+  const liveCv = document.createElement('canvas'); liveCv.width = 1600; liveCv.height = 752;
+  const talkCv = document.createElement('canvas'); talkCv.width = 720; talkCv.height = 1532;
+  const liveTex = mkTex(liveCv), talkTex = mkTex(talkCv);
+  const livePhone = makePhone(2.06, 1, liveTex, true);
+  const talkPhone = makePhone(1, 2.06, talkTex, false);
+
+  // ----- earbuds: glossy ceramic shell, silicone tip, chrome stem ring -----
+  const ceramic = new THREE.MeshPhysicalMaterial({ color: 0xf6f7f9, roughness: .2, metalness: 0, clearcoat: 1, clearcoatRoughness: .05, sheen: .4, sheenRoughness: .4, sheenColor: new THREE.Color(0xdfe6ff), envMapIntensity: 1.2 });
+  const silicone = new THREE.MeshPhysicalMaterial({ color: 0xd6d9e1, roughness: .62, metalness: 0, sheen: .7, sheenRoughness: .55, sheenColor: new THREE.Color(0xffffff), envMapIntensity: .8 });
+  const grille = new THREE.MeshStandardMaterial({ color: 0x18191f, roughness: .9 });
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0x5ef0d6 });
+  const lathe = (pts, seg = 72) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
+  const podGeo = lathe([[.4, -.72], [.55, -.6], [.76, -.42], [.92, -.15], [.98, .12], [.95, .4], [.84, .64], [.62, .84], [.34, .96], [0, .99]]);
+  const nozGeo = lathe([[.3, -1.02], [.33, -.9], [.38, -.8], [.43, -.7]]);
+  const tipGeo = lathe([[0, -1.5], [.2, -1.49], [.36, -1.44], [.48, -1.33], [.53, -1.2], [.5, -1.08], [.4, -1.0], [.3, -.97]]);
+  const stemGeo = lathe([[0, -2.5], [.14, -2.49], [.24, -2.44], [.28, -2.34], [.29, -2.0], [.3, -1.2], [.32, -.4], [.35, 0], [.3, .25]]);
+  function makeBud() {
+    const g = new THREE.Group();
+    const pod = new THREE.Group(); pod.rotation.z = -Math.PI / 2; g.add(pod);
+    pod.add(new THREE.Mesh(podGeo, ceramic), new THREE.Mesh(nozGeo, ceramic), new THREE.Mesh(tipGeo, silicone));
+    const mesh = new THREE.Mesh(new THREE.CircleGeometry(.17, 32), grille); mesh.rotation.x = Math.PI / 2; mesh.position.y = -1.503; pod.add(mesh);
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.045, 12, 8), ledMat); led.position.set(0, .3, .93); pod.add(led);
+    const stem = new THREE.Group(); stem.position.set(.32, -.52, 0); stem.rotation.z = .1; g.add(stem);
+    stem.add(new THREE.Mesh(stemGeo, ceramic));
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(.296, .292, .13, 64, 1, true), ringMat); ring.position.y = -2.12; stem.add(ring);
+    const mic = new THREE.Mesh(new THREE.CircleGeometry(.11, 24), grille); mic.rotation.x = Math.PI / 2; mic.position.y = -2.502; stem.add(mic);
+    g.visible = false; scene.add(g); return g;
+  }
+  const buds = [makeBud(), makeBud()];
+  let W = 0, H = 0;
+  function resize() {
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.6 : 2, Math.sqrt(4.6e6 / (innerWidth * innerHeight)))); W = innerWidth; H = innerHeight; renderer.setSize(W, H, false);
+    camera.aspect = W / H; camera.position.set(0, 0, (H / 2) / Math.tan(15 * Math.PI / 180)); camera.near = 1; camera.far = camera.position.z + 12000; camera.updateProjectionMatrix();
+  }
+  resize(); addEventListener('resize', resize);
+  O = { renderer, scene, camera, root, spin, wings, bars, glow, buds, livePhone, talkPhone, liveCv, talkCv, liveTex, talkTex };
+}
+
+/* ---------- Hero 3D space ---------- */
+let SP = null;
+if (hasGL) {
+  const canvas = $('#space');
+  const r = new THREE.WebGLRenderer({ canvas, antialias: false });
+  r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5)); r.outputEncoding = THREE.sRGBEncoding;
+  const scene = new THREE.Scene();
+  const gc = document.createElement('canvas'); gc.width = 4; gc.height = 256;
+  const gx = gc.getContext('2d'), lg = gx.createLinearGradient(0, 0, 0, 256);
+  lg.addColorStop(0, '#02030a'); lg.addColorStop(.5, '#0b1036'); lg.addColorStop(.86, '#2a2170'); lg.addColorStop(1, '#3a2a7c');
+  gx.fillStyle = lg; gx.fillRect(0, 0, 4, 256);
+  const bg = new THREE.CanvasTexture(gc); bg.encoding = THREE.sRGBEncoding; scene.background = bg;
+  const N = mobile ? 1600 : 3200, P = new Float32Array(N * 3), S = new Float32Array(N), PH = new Float32Array(N), C = new Float32Array(N * 3);
+  const tints = [[1, 1, 1], [.75, .88, 1], [.9, .8, 1], [1, .85, .95]];
+  for (let i = 0; i < N; i++) {
+    P[i * 3] = (Math.random() * 2 - 1) * 1800; P[i * 3 + 1] = (Math.random() * 2 - 1) * 1100; P[i * 3 + 2] = -4600 + Math.random() * 5600;
+    S[i] = .6 + Math.pow(Math.random(), 3) * 3.2; PH[i] = Math.random() * 6.28;
+    const t = tints[(Math.random() * tints.length) | 0]; C.set(t, i * 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('size', new THREE.BufferAttribute(S, 1));
+  geo.setAttribute('phase', new THREE.BufferAttribute(PH, 1)); geo.setAttribute('tint', new THREE.BufferAttribute(C, 3));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uPR: { value: r.getPixelRatio() } },
+    vertexShader: `attribute float size; attribute float phase; attribute vec3 tint; uniform float uTime; uniform float uPR; varying float vA; varying vec3 vC;
+      void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); gl_Position = projectionMatrix * mv;
+        float tw = .55 + .45 * sin(uTime * 1.6 + phase); float far = smoothstep(-5200.0, -2600.0, mv.z); float near = smoothstep(-2.0, -60.0, mv.z);
+        vA = tw * far * near; vC = tint; gl_PointSize = min(size * uPR * 520.0 / max(-mv.z, 1.0), 28.0); }`,
+    fragmentShader: `varying float vA; varying vec3 vC; void main(){ vec2 c = gl_PointCoord - .5; float d = length(c); float a = smoothstep(.5, 0.0, d); a = a * a; gl_FragColor = vec4(vC, a * vA); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  scene.add(new THREE.Points(geo, mat));
+  const neb = [[0x6b4dff, -700, 260, -1800, 2600], [0x1f8cff, 900, -200, -2600, 3000], [0xff5fb4, -300, -520, -1200, 2000], [0x5ee7ff, 600, 420, -3400, 3400], [0x9b5cff, 0, -100, -700, 1600]];
+  const nebTex = glowTexture([[0, 'rgba(255,255,255,.55)'], [.4, 'rgba(255,255,255,.16)'], [1, 'rgba(255,255,255,0)']]);
+  neb.forEach(([col, x, y, z, s]) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: nebTex, color: col, transparent: true, opacity: .32, depthWrite: false, blending: THREE.AdditiveBlending })); sp.position.set(x, y, z); sp.scale.set(s, s, 1); scene.add(sp); });
+  const cam = new THREE.PerspectiveCamera(60, 1, 1, 8000);
+  function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  resize(); addEventListener('resize', resize);
+  SP = { r, scene, cam, mat };
+}
+
+/* ---------- Scroll state ---------- */
+const hero = $('#hero'), stage = $('#stage'), heroCopy = $('#heroCopy'), dawn = $('#dawn');
+const live = $('#live'), device = $('#device'), talk = $('#talk'), tphone = $('#tphone');
+const nav = $('#nav'), edge = $('#edge');
+const anchors = $$('[data-anchor]'), bubs = $$('.bub'), steps = $$('.step');
+const toneSecs = $$('[data-tone]').filter(el => el !== nav);
+const stmt = $('#stmt'), stmtSec = $('#statement');
+const liveFrame = $('.frame'), liveShadow = $('#liveShadow'), talkShadow = $('#talkShadow'), lsec = $('#langs'), lrows = $$('.lrow');
+stmt.innerHTML = stmt.textContent.split(' ').map(w => `<span>${w}</span>`).join(' ');
+const words = $$('span', stmt);
+const vcache = new Map();
+const setVar = (el, k, v) => { const key = el.id + k, s = typeof v === 'number' ? v.toFixed(3) : v; if (vcache.get(key) !== s) { vcache.set(key, s); el.style.setProperty(k, s); } };
+const prog = el => { const r = el.getBoundingClientRect(), d = r.height - innerHeight; return d > 0 ? clamp(-r.top / d) : (r.top < 0 ? 1 : 0); };
+const toW = (x, y) => [x - innerWidth / 2, innerHeight / 2 - y];
+
+function starState(pH) {
+  const vh = innerHeight, vw = innerWidth, ref = vh * .68;
+  const pts = anchors.map(a => { const r = a.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, s: r.width / 2, rot: +(a.dataset.rot || 0) }; });
+  let i = 0; for (let k = 0; k < pts.length; k++) if (pts[k].y <= ref) i = k;
+  const A = pts[i], B = pts[i + 1];
+  const st = { x: A.x, y: A.y, s: A.s, rot: A.rot, e: 0, z: 40, flip: 0, i, vis: true };
+  if (B) {
+    const t = clamp((ref - A.y) / (B.y - A.y)); const e = ss(.12, .88, t), arc = Math.sin(e * Math.PI);
+    st.e = e;
+    st.x = lerp(A.x, B.x, e) + arc * (i % 2 ? -1 : 1) * vw * .14;
+    st.y = lerp(A.y, B.y, e) - arc * vh * .05;
+    st.s = lerp(A.s, B.s, e) * (1 + arc * .3);
+    st.z = 40 + arc * 220;
+    st.rot = lerp(A.rot, B.rot, e) + arc * 30;
+    st.flip = e * Math.PI * 2;
+  }
+  if (i === 0) {
+    const k = ss(.004, .3, pH), ea = easeOut(k);
+    const ang = (1 - ea) * 5;
+    st.x += Math.cos(ang) * (1 - ea) * vw * .3; st.y += Math.sin(ang) * (1 - ea) * vh * .25;
+    st.z = lerp(-9000, st.z, ea); st.flip += (1 - ea) * Math.PI * 6;
+    st.vis = pH > .003;
+  }
+  return st;
+}
+
+let tNow = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  tNow = now / 1000;
+  const vh = innerHeight, vw = innerWidth;
+  mouse.x = lerp(mouse.x, mouse.tx, .06); mouse.y = lerp(mouse.y, mouse.ty, .06);
+
+  // hero
+  const pH = prog(hero), hr = hero.getBoundingClientRect();
+  setVar(stage, '--rest', 1 - ss(.004, .06, pH));
+  const copy = ss(.52, .72, pH); setVar(stage, '--copy', copy); heroCopy.dataset.live = copy > .5 ? '1' : '0';
+  if (SP && hr.bottom > 0) {
+    SP.mat.uniforms.uTime.value = reduce ? 0 : tNow;
+    SP.cam.position.set(mouse.x * 60, -mouse.y * 40, 900 - pH * 2900 - (reduce ? 0 : tNow * 6 % 1));
+    SP.cam.lookAt(mouse.x * 30, -mouse.y * 20, SP.cam.position.z - 1000);
+    SP.r.render(SP.scene, SP.cam);
+  }
+
+  // statement words
+  const sr = stmtSec.getBoundingClientRect();
+  if (sr.top < vh && sr.bottom > 0) {
+    const p = clamp((vh * .85 - sr.top) / (sr.height * .9));
+    const lit = p * (words.length + 6);
+    words.forEach((w, i) => { const o = clamp(lit - i, .16, 1); if (w._o !== o) { w._o = o; w.style.setProperty('--o', o.toFixed(2)); } });
+  }
+
+  // language interlude
+  const lgr = lsec.getBoundingClientRect();
+  if (lgr.top < vh && lgr.bottom > 0) {
+    const p = clamp((vh - lgr.top) / (vh + lgr.height));
+    lrows.forEach(r => { const x = +r.dataset.dir < 0 ? -p * 38 : -38 + p * 38; r.style.transform = `translate3d(${x.toFixed(2)}%,0,0)`; });
+  }
+
+  // live device
+  const pL = prog(live);
+  setVar(device, '--tilt', lerp(58, 0, ss(0, .32, pL)));
+  setVar(device, '--ds', lerp(.84, 1, ss(0, .32, pL)));
+  setVar(device, '--glow', ss(.18, .4, pL));
+  setVar(liveShadow, '--psh', ss(.15, .38, pL));
+  const lr = live.getBoundingClientRect();
+  const ev = lr.top < vh * .5 && lr.bottom > vh * .5 ? ss(.2, .4, pL) * (1 - ss(.82, 1, pL)) : 0;
+  setVar(edge, '--edge', ev); edge.classList.toggle('off', ev < .01);
+
+  // talk
+  const pT = prog(talk), tr = talk.getBoundingClientRect();
+  bubs.forEach(b => b.classList.toggle('on', pT >= +b.dataset.at));
+  const si = pT < .36 ? 0 : pT < .66 ? 1 : 2;
+  steps.forEach((s, k) => s.classList.toggle('on', k === si));
+
+  storyUpdate(tNow);
+  const stR = story.getBoundingClientRect();
+  const cover = (stR.top < 0 && stR.bottom > vh) ? clamp(Math.min(-stR.top, stR.bottom - vh) / (vh * .6)) : 0;
+
+  // nav tone
+  let tone = 'dark';
+  const dr = dawn.getBoundingClientRect();
+  if (dr.top <= 30 && dr.bottom > 30) tone = (30 - dr.top) / dr.height > .5 ? 'light' : 'dark';
+  else for (const s of toneSecs) { const r = s.getBoundingClientRect(); if (r.top <= 30 && r.bottom > 30) { tone = s.dataset.tone; break; } }
+  if (nav.dataset.tone !== tone) nav.dataset.tone = tone;
+
+  if (!O) return;
+  // star
+  const st = starState(pH);
+  const [wx, wy] = toW(st.x, st.y);
+  O.root.visible = st.vis;
+  O.root.position.set(wx, wy, st.z);
+  O.root.scale.setScalar(st.s * (1 - cover) + .0001); if (cover > .995) O.root.visible = false;
+  O.root.rotation.z = -st.rot * Math.PI / 180;
+  const idle = reduce ? 0 : Math.sin(tNow * .7) * .45;
+  O.spin.rotation.y = idle + st.flip + mouse.x * .35;
+  O.spin.rotation.x = (reduce ? 0 : Math.sin(tNow * .5) * .12) + mouse.y * .25;
+  const onHero = st.i === 0 ? 1 - st.e : 0;
+  O.wings.forEach((m, j) => { const k = ss(.27 + j * .04, .4 + j * .04, pH); m.position.y = .63 + .7 * (1 - k); m.scale.setScalar(Math.max(k, .001)); m.visible = k > .002; });
+  O.bars.forEach((m, j) => { const k = ss(.44 + j * .035, .55 + j * .035, pH) * onHero; m.scale.set(Math.max(k, .001), Math.max(k, .001), Math.max(k, .001)); m.visible = k > .002; });
+  O.glow.scale.setScalar(lerp(3.2, 2.4, 1 - onHero) * (st.i === 0 ? 1.4 : 1));
+  O.glow.material.opacity = lerp(.35, 1, onHero);
+
+  // live phone (3D)
+  const liveOn = lr.top < vh && lr.bottom > 0;
+  O.livePhone.visible = liveOn;
+  if (liveOn) {
+    const fr = liveFrame.getBoundingClientRect();
+    const e = easeOut(ss(0, .34, pL));
+    const [px, py] = toW(fr.left + fr.width / 2, fr.top + fr.height / 2);
+    O.livePhone.position.set(px, py - (1 - e) * vh * .1, -(1 - e) * 260);
+    O.livePhone.scale.setScalar(fr.width / 2.1);
+    const sway = reduce ? 0 : 1;
+    O.livePhone.rotation.set(lerp(-1.2, 0, e) + Math.sin(tNow * .5) * .025 * sway - mouse.y * .05, lerp(.6, 0, e) + Math.sin(tNow * .4) * .05 * sway + mouse.x * .09, lerp(-.14, 0, e));
+    drawLive(O.liveCv, tNow); O.liveTex.needsUpdate = true;
+  }
+
+  // talk phone + earbuds orbit (real depth: buds pass behind the phone)
+  const talkOn = tr.top < vh && tr.bottom > 0;
+  O.talkPhone.visible = talkOn; O.buds.forEach(b => b.visible = talkOn);
+  if (talkOn) {
+    const pr = tphone.getBoundingClientRect();
+    const [cx, cy] = toW(pr.left + pr.width / 2, pr.top + pr.height / 2);
+    const turn = easeOut(ss(0, .2, pT));
+    O.talkPhone.position.set(cx, cy, 0);
+    O.talkPhone.scale.setScalar(pr.height / 2.1);
+    O.talkPhone.rotation.set(.05 - mouse.y * .05, lerp(Math.PI, 0, turn) + Math.sin(pT * Math.PI * 2) * .2 * turn + mouse.x * .1, 0);
+    drawTalk(O.talkCv, tNow, pT); O.talkTex.needsUpdate = true;
+    const R = Math.min(Math.max(pr.width * 1.25, 140), vw * .42);
+    const size = clamp(vw * .028, 16, 28);
+    const enter = ss(.04, .16, pT), rest = ss(.8, .95, pT);
+    const base = pT * Math.PI * 2.6 + Math.PI * .25;
+    O.buds.forEach((b, j) => {
+      const th = base + j * Math.PI;
+      let x = Math.cos(th) * R, y = Math.sin(th * 2) * pr.height * .06 + (j ? -1 : 1) * pr.height * .06, z = Math.sin(th) * R;
+      const rx = (j ? 1 : -1) * R * .66, ry = -pr.height * .14, rz = R * .4;
+      x = lerp(x, rx, rest); y = lerp(y, ry, rest); z = lerp(z, rz, rest);
+      y -= (1 - enter) * vh * .6;
+      b.position.set(cx + x, cy + y, z);
+      const sc = size * (.5 + .5 * enter);
+      b.scale.set(j ? -sc : sc, sc, sc);
+      b.rotation.y = lerp(-th + Math.PI / 2 + tNow * (reduce ? 0 : .4), j ? -.7 : .7, rest);
+      b.rotation.z = lerp(Math.sin(th) * .3, j ? .14 : -.14, rest);
+      b.rotation.x = lerp(.15, .08, rest);
+    });
+    setVar(talkShadow, '--psh', turn);
+  }
+  const anyVis = O.root.visible || O.livePhone.visible || O.talkPhone.visible;
+  if (anyVis || O.dirty) { O.renderer.render(O.scene, O.camera); O.dirty = anyVis; }
+}
+requestAnimationFrame(frame);
+
+/* ---------- Glass pointer light + jelly ---------- */
+document.addEventListener('pointermove', e => {
+  const g = e.target.closest && e.target.closest('.glass'); if (!g) return;
+  const r = g.getBoundingClientRect(); g.style.setProperty('--mx', (e.clientX - r.left) + 'px'); g.style.setProperty('--my', (e.clientY - r.top) + 'px');
+});
+document.addEventListener('click', e => { const g = e.target.closest('.glass'); if (!g || reduce) return; g.classList.remove('is-pop'); void g.offsetWidth; g.classList.add('is-pop'); });
+document.addEventListener('animationend', e => { if (e.animationName === 'jelly') e.target.classList.remove('is-pop'); });
+
+/* ---------- Speech + typing ---------- */
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; u.rate = 1.02;
+    const v = speechSynthesis.getVoices().find(v => /vi/i.test(v.lang)); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (err) { /* speech unavailable */ }
+}
+function typeOut(el, text, done, speed = 26) {
+  clearInterval(el._t); el.textContent = ''; let i = 0;
+  if (reduce) { el.textContent = text; done && done(); return; }
+  el._t = setInterval(() => { i++; el.textContent = text.slice(0, i); if (i >= text.length) { clearInterval(el._t); done && done(); } }, speed);
+}
+
+/* ---------- Chapter 1: cinematic bokeh video + subtitles ---------- */
+const bk = $('#bokeh'), bx = bk.getContext('2d');
+let bW = 0, bH = 0, bVisible = false;
+const lights = Array.from({ length: 34 }, () => ({ x: Math.random(), y: .25 + Math.random() * .6, r: .02 + Math.random() * .07, h: [38, 28, 200, 330, 48][(Math.random() * 5) | 0], v: (Math.random() * .5 + .2) * (Math.random() < .5 ? -1 : 1) * .006, a: .25 + Math.random() * .5, ph: Math.random() * 6 }));
+function sizeBokeh() { const d = Math.min(devicePixelRatio || 1, 2); bW = bk.clientWidth; bH = bk.clientHeight; bk.width = bW * d; bk.height = bH * d; bx.setTransform(d, 0, 0, d, 0, 0); }
+function drawBokehTo(c, W, H, t, move) {
+  const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#060818'); gr.addColorStop(.6, '#1a1230'); gr.addColorStop(1, '#2e1a22');
+  c.globalCompositeOperation = 'source-over'; c.fillStyle = gr; c.fillRect(0, 0, W, H);
+  c.globalCompositeOperation = 'lighter';
+  for (const l of lights) {
+    if (move && !reduce) { l.x += l.v / 60; if (l.x < -.1) l.x = 1.1; if (l.x > 1.1) l.x = -.1; }
+    const x = l.x * W, y = l.y * H, r = l.r * W, a = l.a * (.75 + .25 * Math.sin(t * 1.2 + l.ph));
+    const rg = c.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, `hsla(${l.h},95%,70%,${a})`); rg.addColorStop(.7, `hsla(${l.h},95%,62%,${a * .55})`); rg.addColorStop(1, `hsla(${l.h},95%,60%,0)`);
+    c.fillStyle = rg; c.beginPath(); c.arc(x, y, r, 0, 6.283); c.fill();
+  }
+  c.globalCompositeOperation = 'source-over';
+  const v = c.createLinearGradient(0, H * .55, 0, H); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.6)');
+  c.fillStyle = v; c.fillRect(0, 0, W, H);
+}
+function drawBokeh(t) { drawBokehTo(bx, bW, bH, t, true); }
+function bokehLoop(now) { if (bVisible) { drawBokeh(now / 1000); requestAnimationFrame(bokehLoop); } }
+sizeBokeh(); drawBokeh(0); addEventListener('resize', () => { sizeBokeh(); drawBokeh(0); });
+const LIVE_LINES = [
+  ['EN', 'This city never really sleeps, does it?', 'Thành phố này chẳng bao giờ ngủ, nhỉ?'],
+  ['JA', 'この通りは夜になると本当に綺麗です。', 'Con phố này về đêm thật sự rất đẹp.'],
+  ['ZH', '我们先去吃宵夜，然后再逛逛。', 'Mình đi ăn khuya trước, rồi dạo thêm một vòng nhé.'],
+  ['EN', 'Stay with me, the best part is coming up.', 'Ở lại với mình nhé, phần hay nhất sắp tới rồi.']
+];
+const liveSrc = $('#liveSrc'), liveVi = $('#liveVi'), liveLang = $('#liveLang');
+let liveIdx = 1, liveTimer = null;
+liveSrc.textContent = LIVE_LINES[0][1]; liveVi.textContent = LIVE_LINES[0][2];
+function liveNext() {
+  if (!bVisible) { liveTimer = null; return; }
+  const [code, src, vi] = LIVE_LINES[liveIdx++ % LIVE_LINES.length];
+  liveLang.textContent = code + ' → VI'; liveSrc.textContent = src; liveSrc.lang = code.toLowerCase();
+  typeOut(liveVi, vi, () => { liveTimer = setTimeout(liveNext, 2400); });
+}
+new IntersectionObserver(es => es.forEach(e => {
+  const was = bVisible; bVisible = e.isIntersecting;
+  if (bVisible && !was && !reduce && !hasGL) requestAnimationFrame(bokehLoop);
+  if (bVisible && !liveTimer) liveTimer = setTimeout(liveNext, 600);
+})).observe(bk);
+
+/* ---------- Screen textures for the 3D phones ---------- */
+function rrPath(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function wrapLines(g, text, maxW) {
+  const cjk = /[぀-ヿ㐀-鿿＀-￯]/.test(text);
+  const toks = cjk ? [...text] : text.split(' '), sep = cjk ? '' : ' ', lines = []; let cur = '';
+  for (const tk of toks) { const test = cur ? cur + sep + tk : tk; if (g.measureText(test).width > maxW && cur) { lines.push(cur); cur = tk; } else cur = test; }
+  if (cur) lines.push(cur); return lines;
+}
+const FONT = '"Be Vietnam Pro", system-ui, sans-serif';
+function drawLive(cv, t) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  drawBokehTo(g, W, H, t, true);
+  g.textBaseline = 'middle';
+  // chips
+  rrPath(g, 150, 46, 132, 48, 24); g.fillStyle = 'rgba(5,7,20,.5)'; g.fill();
+  g.fillStyle = '#ff4d63'; g.beginPath(); g.arc(178, 70, 7, 0, 6.283); g.fill();
+  g.fillStyle = '#fff'; g.font = '500 22px "Roboto Mono", monospace'; g.textAlign = 'left'; g.fillText('LIVE', 196, 71);
+  const lang = liveLang.textContent; g.font = '500 22px "Roboto Mono", monospace';
+  const lw = g.measureText(lang).width + 44; rrPath(g, W - 70 - lw, 46, lw, 48, 24); g.fillStyle = 'rgba(5,7,20,.5)'; g.fill();
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(lang, W - 70 - lw / 2, 71);
+  // subtitle overlay
+  const src = liveSrc.textContent, vi = liveVi.textContent || ' ', maxW = W * .66;
+  g.font = `400 30px ${FONT}`; const sl = wrapLines(g, src, maxW);
+  g.font = `600 48px ${FONT}`; const vl = wrapLines(g, vi, maxW);
+  const bh = 40 + sl.length * 42 + vl.length * 62 + 14, bw = W * .74, bx = (W - bw) / 2, by = H - 86 - bh;
+  rrPath(g, bx, by, bw, bh, 30); g.fillStyle = 'rgba(8,10,28,.64)'; g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 2; g.stroke();
+  let y = by + 40;
+  g.font = `400 30px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.66)';
+  sl.forEach(l => { g.fillText(l, W / 2, y); y += 42; });
+  y += 12; g.font = `600 48px ${FONT}`; g.fillStyle = '#fff';
+  vl.forEach((l, i) => {
+    g.fillText(l, W / 2, y);
+    if (i === vl.length - 1 && Math.sin(t * 6) > 0) { const ex = W / 2 + g.measureText(l).width / 2 + 8; g.fillStyle = '#6ee7ff'; g.fillRect(ex, y - 24, 4, 48); g.fillStyle = '#fff'; }
+    y += 62;
+  });
+  // progress bar
+  g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(150, H - 40, W - 220, 5);
+  g.fillStyle = '#fff'; g.fillRect(150, H - 40, (W - 220) * ((t * .02) % 1), 5);
+}
+const BUB = $$('.bub').map(b => ({ at: +b.dataset.at, label: b.querySelector('small').textContent, src: b.querySelector('b').textContent, vi: b.querySelector('em').textContent }));
+function drawTalk(cv, t, p) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#10143c'); bg.addColorStop(1, '#03040c');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const rg = g.createRadialGradient(W * .5, H * .16, 0, W * .5, H * .16, W * .9); rg.addColorStop(0, 'rgba(107,123,255,.28)'); rg.addColorStop(1, 'rgba(107,123,255,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  g.fillStyle = '#fff'; g.font = `600 26px ${FONT}`; g.fillText('0:18', 56, 64);
+  rrPath(g, W - 112, 44, 46, 24, 7); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2.5; g.stroke(); g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(W - 107, 49, 16, 14);
+  g.fillStyle = '#34d399'; g.beginPath(); g.arc(64, 152, 9, 0, 6.283); g.fill();
+  g.fillStyle = '#fff'; g.font = `700 36px ${FONT}`; g.fillText('Hội thoại 1:1', 86, 164);
+  g.fillStyle = 'rgba(233,235,250,.55)'; g.font = `400 25px ${FONT}`; g.fillText('Đang nghe người đối diện', 56, 206);
+  for (let i = 0; i < 26; i++) {
+    const amp = reduce ? .5 : (Math.sin(t * 6 + i * .7) * .5 + .5) * (Math.sin(t * 2.3 + i * 1.3) * .5 + .5);
+    const h = 10 + amp * 58, x = 56 + i * ((W - 112) / 26);
+    const bgr = g.createLinearGradient(0, 260 - h / 2, 0, 260 + h / 2); bgr.addColorStop(0, '#6ee7ff'); bgr.addColorStop(1, '#b27cff');
+    g.fillStyle = bgr; rrPath(g, x, 262 - h / 2, 12, h, 6); g.fill();
+  }
+  let y = 330;
+  BUB.forEach(b => {
+    const a = ss(b.at, b.at + .07, p); if (a < .01) return;
+    g.globalAlpha = a; const off = (1 - a) * 34;
+    g.font = `500 31px ${FONT}`; const l1 = wrapLines(g, b.src, W - 170);
+    g.font = `600 32px ${FONT}`; const l2 = wrapLines(g, b.vi, W - 210);
+    const bh = 34 + 28 + l1.length * 42 + 20 + l2.length * 44 + 26;
+    rrPath(g, 44, y + off, W - 88, bh, 36); g.fillStyle = 'rgba(255,255,255,.07)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 2; g.stroke();
+    let ty = y + off + 50;
+    g.fillStyle = 'rgba(233,235,250,.5)'; g.font = `400 23px ${FONT}`; g.fillText(b.label, 80, ty); ty += 44;
+    g.fillStyle = '#fff'; g.font = `500 31px ${FONT}`; l1.forEach(l => { g.fillText(l, 80, ty); ty += 42; });
+    ty += 14; g.fillStyle = '#9fe9ff';
+    for (let k = 0; k < 3; k++) { const hh = 10 + k * 7; g.fillRect(80 + k * 9, ty - 12 - hh / 2, 5, hh); }
+    g.font = `600 32px ${FONT}`; l2.forEach(l => { g.fillText(l, 122, ty); ty += 44; });
+    y += (bh + 24) * a; g.globalAlpha = 1;
+  });
+  rrPath(g, 44, H - 170, W - 88, 92, 46); g.fillStyle = 'rgba(110,231,255,.12)'; g.fill();
+  g.fillStyle = '#9fe9ff'; g.font = `600 27px ${FONT}`; g.textAlign = 'center'; g.fillText('Đang đọc vào tai nghe', W / 2 + 22, H - 114);
+  for (let k = 0; k < 4; k++) { const hh = 10 + (reduce ? 8 : (Math.sin(t * 7 + k) * .5 + .5) * 22); g.fillRect(W / 2 - 190 + k * 10, H - 124 - hh / 2, 5, hh); }
+  g.textAlign = 'left';
+  rrPath(g, W / 2 - 100, H - 34, 200, 9, 4.5); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
+}
+
+/* ---------- 3D hand skeleton ---------- */
+const POSES = [
+  { name: 'Xin chào', hint: 'Bàn tay mở, các ngón duỗi thẳng', c: [0, 0, 0, 0], a: [-12, -3, 5, 14], th: -55, tz: .15, tc: 0 },
+  { name: 'Tốt lắm', hint: 'Nắm tay, ngón cái hướng lên', c: [1, 1, 1, 1], a: [-4, 0, 2, 4], th: -6, tz: .15, tc: 0 },
+  { name: 'Chiến thắng', hint: 'Ngón trỏ và ngón giữa tạo hình chữ V', c: [0, 0, 1, 1], a: [-14, 10, 2, 6], th: 30, tz: .9, tc: .6 },
+  { name: 'Yêu thương', hint: 'Ngón cái, ngón trỏ và ngón út duỗi ra', c: [0, 1, 1, 0], a: [-8, 0, 0, 16], th: -60, tz: .1, tc: 0 },
+  { name: 'Chỉ tay', hint: 'Ngón trỏ duỗi thẳng, các ngón khác gập lại', c: [0, 1, 1, 1], a: [-2, 0, 2, 4], th: 30, tz: .9, tc: .6 },
+  { name: 'Nắm tay', hint: 'Gập tất cả các ngón, ngón cái ôm phía trước', c: [1, 1, 1, 1], a: [-4, 0, 2, 4], th: 35, tz: .95, tc: .7 },
+  { name: 'Đồng ý', hint: 'Ngón cái chạm ngón trỏ tạo vòng tròn', c: [.62, 0, 0, 0], a: [-6, 0, 6, 14], th: -12, tz: .7, tc: .35 }
+];
+const MCP = [[-.34, .92], [-.11, .98], [.12, .95], [.33, .86]];
+const BONES = [[.4, .25, .19], [.45, .29, .21], [.42, .27, .2], [.33, .21, .17]];
+const BEND = [1.35, 1.6, 1.15], TH_LEN = [.3, .27, .22];
+const LINKS = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11], [11, 12], [9, 13], [13, 14], [14, 15], [15, 16], [13, 17], [17, 18], [18, 19], [19, 20], [0, 17]];
+function handPts(p) {
+  const pts = [[0, 0, 0]];
+  let b = [-.27, .2, .04]; pts.push(b.slice());
+  for (let k = 0; k < 3; k++) {
+    const a = p.th * Math.PI / 180 + p.tc * k * .35, f = p.tz * (.8 + k * .25);
+    b = [b[0] + Math.sin(a) * Math.cos(f) * TH_LEN[k], b[1] + Math.cos(a) * Math.cos(f) * TH_LEN[k], b[2] + Math.sin(f) * TH_LEN[k]];
+    pts.push(b.slice());
+  }
+  for (let i = 0; i < 4; i++) {
+    let q = [MCP[i][0], MCP[i][1], 0]; pts.push(q.slice());
+    const a = p.a[i] * Math.PI / 180; let B = 0;
+    for (let j = 0; j < 3; j++) {
+      B += p.c[i] * BEND[j];
+      const L = BONES[i][j];
+      q = [q[0] + Math.sin(a) * Math.cos(B) * L, q[1] + Math.cos(a) * Math.cos(B) * L, q[2] + Math.sin(B) * L];
+      pts.push(q.slice());
+    }
+  }
+  return pts;
+}
+class Wire {
+  constructor(canvas) {
+    this.cv = canvas; this.cx = canvas.getContext('2d');
+    this.cur = JSON.parse(JSON.stringify(POSES[0])); this.target = POSES[0]; this.visible = false; this.t0 = Math.random() * 10;
+    this.size();
+  }
+  size() { const d = Math.min(devicePixelRatio || 1, 2); this.w = this.cv.clientWidth; this.h = this.cv.clientHeight; this.cv.width = this.w * d; this.cv.height = this.h * d; this.cx.setTransform(d, 0, 0, d, 0, 0); }
+  set(p) { this.target = p; }
+  step(t) {
+    const c = this.cur, T = this.target, k = reduce ? 1 : .12;
+    for (let i = 0; i < 4; i++) { c.c[i] = lerp(c.c[i], T.c[i], k); c.a[i] = lerp(c.a[i], T.a[i], k); }
+    ['th', 'tz', 'tc'].forEach(n => c[n] = lerp(c[n], T[n], k));
+    const tt = reduce ? 0 : t + this.t0;
+    const ry = Math.sin(tt * .55) * .6, rx = -.15 + Math.sin(tt * .4) * .12;
+    const cy_ = Math.cos(ry), sy = Math.sin(ry), cx_ = Math.cos(rx), sx = Math.sin(rx);
+    const S = Math.min(this.w, this.h) * .48, ox = this.w / 2, oy = this.h * .58 + Math.sin(tt * .9) * 4;
+    const pr = handPts(c).map(([x, y, z]) => {
+      y -= .85;
+      let X = x * cy_ + z * sy, Z = -x * sy + z * cy_;
+      let Y = y * cx_ - Z * sx; Z = y * sx + Z * cx_;
+      const f = 3.2 / (3.2 - Z);
+      return [ox + X * S * f, oy - Y * S * f, Z, f];
+    });
+    const g = this.cx; g.clearRect(0, 0, this.w, this.h);
+    // palm membrane
+    g.beginPath(); [0, 1, 5, 9, 13, 17].forEach((i, n) => n ? g.lineTo(pr[i][0], pr[i][1]) : g.moveTo(pr[i][0], pr[i][1])); g.closePath();
+    const pg = g.createLinearGradient(pr[0][0], pr[0][1], pr[9][0], pr[9][1]); pg.addColorStop(0, 'rgba(110,231,255,.04)'); pg.addColorStop(1, 'rgba(178,124,255,.16)');
+    g.fillStyle = pg; g.fill();
+    // bones (back to front)
+    const order = LINKS.map(l => [l, (pr[l[0]][2] + pr[l[1]][2]) / 2]).sort((a, b) => a[1] - b[1]);
+    g.lineCap = 'round';
+    for (const [[a, b]] of order) {
+      const A = pr[a], B = pr[b], d = (A[3] + B[3]) / 2;
+      const lg = g.createLinearGradient(A[0], A[1], B[0], B[1]); lg.addColorStop(0, '#6ee7ff'); lg.addColorStop(1, '#b27cff');
+      g.strokeStyle = lg; g.globalAlpha = clamp(.35 + (d - .7) * 1.4, .25, 1);
+      g.shadowColor = 'rgba(110,200,255,.9)'; g.shadowBlur = 12 * d;
+      g.lineWidth = 2.6 * d * (S / 200); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke();
+      g.shadowBlur = 0; g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1 * d * (S / 200); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke();
+    }
+    g.shadowBlur = 0; g.globalAlpha = 1;
+    pr.map((p, i) => [p, i]).sort((a, b) => a[0][2] - b[0][2]).forEach(([p, i]) => {
+      const tip = [4, 8, 12, 16, 20].includes(i), r = (tip ? 5.2 : 3.6) * p[3] * (S / 200);
+      const halo = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], r * 3);
+      halo.addColorStop(0, tip ? 'rgba(110,231,255,.5)' : 'rgba(178,124,255,.38)'); halo.addColorStop(1, 'rgba(110,231,255,0)');
+      g.fillStyle = halo; g.beginPath(); g.arc(p[0], p[1], r * 3, 0, 6.283); g.fill();
+      const sp = g.createRadialGradient(p[0] - r * .4, p[1] - r * .45, r * .1, p[0], p[1], r * 1.3);
+      sp.addColorStop(0, '#ffffff'); sp.addColorStop(.55, tip ? '#9fefff' : '#d2c0ff'); sp.addColorStop(1, tip ? '#2f8fc4' : '#5a44b8');
+      g.fillStyle = sp; g.beginPath(); g.arc(p[0], p[1], r * 1.3, 0, 6.283); g.fill();
+    });
+    // tracking box
+    const xs = pr.map(p => p[0]), ys = pr.map(p => p[1]);
+    const x0 = Math.min(...xs) - 18, y0 = Math.min(...ys) - 18, x1 = Math.max(...xs) + 18, y1 = Math.max(...ys) + 18, L = 16;
+    g.strokeStyle = 'rgba(110,231,255,.7)'; g.lineWidth = 1.5; g.beginPath();
+    [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]].forEach(([x, y, dx, dy]) => { g.moveTo(x + dx * L, y); g.lineTo(x, y); g.lineTo(x, y + dy * L); });
+    g.stroke();
+  }
+}
+const bigHand = new Wire($('#bigHand')), appHand = new Wire($('#appHand'));
+const wires = [bigHand, appHand];
+let wireOn = false;
+function wireLoop(now) {
+  let any = false;
+  wires.forEach(w => { if (w.visible) { w.step(now / 1000); any = true; } });
+  tickConf(now);
+  if (any) requestAnimationFrame(wireLoop); else wireOn = false;
+}
+function wakeWires() { if (!wireOn) { wireOn = true; requestAnimationFrame(wireLoop); } }
+const wio = new IntersectionObserver(es => es.forEach(e => {
+  const w = wires.find(w => w.cv === e.target); if (!w) return;
+  w.visible = e.isIntersecting; if (w.visible) { w.size(); wakeWires(); }
+}));
+wires.forEach(w => wio.observe(w.cv));
+addEventListener('resize', () => wires.forEach(w => w.size()));
+
+/* ---------- Story: silence → hands of light → a voice ---------- */
+const story = $('#story'), sPin = $('#storyPin'), scv = $('#storyCv'), sctx = scv.getContext('2d'), sSayWrap = $('#storySayWrap');
+const slines = $$('.sline', story);
+const PALM = [[0, 1, 5], [0, 5, 9], [0, 9, 13], [0, 13, 17]];
+const NP = innerWidth < 700 ? 1100 : 2200;
+const parts = Array.from({ length: NP }, (_, i) => ({ px: 0, py: 0, init: false, link: i % LINKS.length, u: Math.random(), off: Math.random() - .5, a2: Math.random(), b2: Math.random(), tri: (Math.random() * 4) | 0, palm: Math.random() < .2, sp: .05 + Math.random() * .07, tw: Math.random() * 6.283, sx: Math.random(), sy: Math.random(), size: .8 + Math.random() * 1.4, ti: (Math.random() * 1e6) | 0 }));
+const HUES = Array.from({ length: 24 }, (_, i) => `hsl(${190 + i * 4},95%,72%)`);
+let sW = 0, sH = 0, textPts = [[0, 0]], textFont = '700 60px sans-serif';
+const sHand = JSON.parse(JSON.stringify(POSES[0]));
+function sizeStory() {
+  const d = Math.min(devicePixelRatio || 1, 1.5); sW = scv.clientWidth; sH = scv.clientHeight;
+  scv.width = Math.round(sW * d); scv.height = Math.round(sH * d); sctx.setTransform(d, 0, 0, d, 0, 0);
+  const w = Math.max(1, Math.round(sW)), h = Math.max(1, Math.round(sH * .36));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); let fs = Math.min(w * .14, h * .62);
+  const setF = () => { g.font = `700 ${fs}px "Unbounded","Be Vietnam Pro",sans-serif`; }; setF();
+  while (g.measureText('Yêu thương').width > w * .84 && fs > 18) { fs *= .93; setF(); }
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#000'; g.fillText('Yêu thương', w / 2, h / 2); textFont = g.font;
+  const data = g.getImageData(0, 0, w, h).data, pts = [], step = Math.max(2, Math.round(fs / 24));
+  for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step) if (data[(y * w + x) * 4 + 3] > 120) pts.push([x, y - h / 2]);
+  if (pts.length) textPts = pts;
+}
+function projHand(par, ry, rx, S, ox, oy) {
+  const cy_ = Math.cos(ry), sy = Math.sin(ry), cx_ = Math.cos(rx), sx = Math.sin(rx);
+  return handPts(par).map(([x, y, z]) => { y -= .85; const X = x * cy_ + z * sy; let Z = -x * sy + z * cy_; const Y = y * cx_ - Z * sx; Z = y * sx + Z * cx_; const f = 3.2 / (3.2 - Z); return [ox + X * S * f, oy - Y * S * f, Z, f]; });
+}
+function drawStory(t, p, dark) {
+  const g = sctx, W = sW, H = sH, cx = W / 2, cy = H * .6;
+  g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, W, H);
+  const amp = (1 - ss(.1, .27, p)) * H * .11;
+  const kHand = ss(.4, .5, p), kText = ss(.58, .68, p), kStars = ss(.77, .87, p), fade = 1 - ss(.95, 1, p);
+  const pm = ss(.47, .55, p), A = POSES[0], B = POSES[3];
+  for (let i = 0; i < 4; i++) { sHand.c[i] = lerp(A.c[i], B.c[i], pm); sHand.a[i] = lerp(A.a[i], B.a[i], pm); }
+  sHand.th = lerp(A.th, B.th, pm); sHand.tz = lerp(A.tz, B.tz, pm); sHand.tc = lerp(A.tc, B.tc, pm);
+  const S = Math.min(W * .3, H * .27);
+  const hp = kHand > 0 ? projHand(sHand, reduce ? 0 : Math.sin(t * .5) * .35, -.12, S, cx, H * .36 + S * 1.23) : null;
+  if (dark > .05) {
+    const glow = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * .5);
+    glow.addColorStop(0, `rgba(90,110,255,${.18 * dark * fade})`); glow.addColorStop(1, 'rgba(90,110,255,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, W, H);
+  }
+  if (kText > .01) {
+    g.save(); g.globalAlpha = kText * (1 - kStars) * .32 * fade; g.font = textFont; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const tg = g.createLinearGradient(cx - W * .35, 0, cx + W * .35, 0); tg.addColorStop(0, '#6ee7ff'); tg.addColorStop(.5, '#8a8cff'); tg.addColorStop(1, '#ff8ad8');
+    g.fillStyle = tg; g.shadowColor = 'rgba(140,170,255,.9)'; g.shadowBlur = 44; g.fillText('Yêu thương', cx, cy); g.restore();
+  }
+  g.globalCompositeOperation = dark > .6 ? 'lighter' : 'source-over';
+  const lit = dark > .5;
+  for (let i = 0; i < parts.length; i++) {
+    const q = parts[i];
+    const wx = W * (.04 + q.sx * .92), env = Math.sin(Math.PI * (wx / W));
+    let tx = wx, ty = cy + amp * env * (Math.sin(wx / W * 18 + t * 2.4) * .7 + Math.sin(wx / W * 41 - t * 3.1) * .3) + q.off * 3;
+    if (hp) {
+      let hx, hy;
+      if (q.palm) { const tr = PALM[q.tri]; let a = q.a2, b = q.b2; if (a + b > 1) { a = 1 - a; b = 1 - b; } const P0 = hp[tr[0]], P1 = hp[tr[1]], P2 = hp[tr[2]]; hx = P0[0] + (P1[0] - P0[0]) * a + (P2[0] - P0[0]) * b; hy = P0[1] + (P1[1] - P0[1]) * a + (P2[1] - P0[1]) * b; }
+      else { const [ia, ib] = LINKS[q.link], P = hp[ia], Q = hp[ib], dx = Q[0] - P[0], dy = Q[1] - P[1], L = Math.hypot(dx, dy) || 1, th = S * .06 * (P[3] + Q[3]) / 2; hx = P[0] + dx * q.u - dy / L * q.off * th; hy = P[1] + dy * q.u + dx / L * q.off * th; }
+      tx = lerp(tx, hx, kHand); ty = lerp(ty, hy, kHand);
+    }
+    if (kText > 0) { const tp = textPts[q.ti % textPts.length]; tx = lerp(tx, tp[0] + q.off * 2, kText); ty = lerp(ty, cy + tp[1] + q.off * 2, kText); }
+    if (kStars > 0) { const sy = (((q.sy - t * .01 * q.sp * 10) % 1) + 1) % 1; tx = lerp(tx, q.sx * W, kStars); ty = lerp(ty, sy * H, kStars); }
+    if (!q.init) { q.px = tx; q.py = ty; q.init = true; }
+    const k = reduce ? 1 : Math.min(1, q.sp * 2.4);
+    q.px += (tx - q.px) * k; q.py += (ty - q.py) * k;
+    const jx = reduce ? 0 : Math.sin(t * 1.3 + q.tw) * .7, jy = reduce ? 0 : Math.cos(t * 1.1 + q.tw) * .7;
+    g.globalAlpha = (.35 + .65 * (.5 + .5 * Math.sin(t * 2 + q.tw))) * fade * (lit ? 1 : .8);
+    g.fillStyle = lit ? HUES[Math.min(23, Math.max(0, (q.px / W * 24) | 0))] : '#1d1d1f';
+    const sz = q.size * (lit ? 1 : .85);
+    g.fillRect(q.px + jx - sz / 2, q.py + jy - sz / 2, sz, sz);
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  // recognition HUD around the hand
+  const hudA = hp ? ss(.46, .5, p) * (1 - ss(.56, .6, p)) : 0;
+  if (hudA > .01) {
+    const xs = hp.map(q => q[0]), ys = hp.map(q => q[1]);
+    const x0 = Math.min(...xs) - 30, y0 = Math.min(...ys) - 30, x1 = Math.max(...xs) + 30, y1 = Math.max(...ys) + 30, L = 22;
+    g.strokeStyle = `rgba(110,231,255,${.8 * hudA})`; g.lineWidth = 1.6; g.beginPath();
+    [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]].forEach(([x, y, dx, dy]) => { g.moveTo(x + dx * L, y); g.lineTo(x, y); g.lineTo(x, y + dy * L); });
+    g.stroke();
+    g.fillStyle = `rgba(255,255,255,${hudA})`;
+    hp.forEach(q => { g.beginPath(); g.arc(q[0], q[1], 2.6 * q[3], 0, 6.283); g.fill(); });
+    g.font = '500 12px "Roboto Mono", monospace'; g.textAlign = 'left'; g.fillStyle = `rgba(160,225,255,${hudA})`;
+    g.fillText(pm > .6 ? `NHẬN DIỆN · YÊU THƯƠNG · ${Math.round(80 + pm * 16)}%` : 'ĐANG THEO DÕI 21 ĐIỂM…', x0, y1 + 22);
+  }
+  // the voice: ripples while the word glows
+  const ra = kText * (1 - kStars) * fade;
+  if (ra > .01 && !reduce) {
+    for (let j = 0; j < 3; j++) {
+      const fr = (t * .3 + j / 3) % 1;
+      g.strokeStyle = `rgba(150,190,255,${(1 - fr) * .4 * ra})`; g.lineWidth = 1.4;
+      g.beginPath(); g.ellipse(cx, cy, W * .12 + fr * W * .4, H * .07 + fr * H * .28, 0, 0, 6.283); g.stroke();
+    }
+  }
+}
+function storyUpdate(t) {
+  const r = story.getBoundingClientRect(), vh = innerHeight;
+  if (!(r.top < vh && r.bottom > 0)) return;
+  const p = prog(story);
+  const dark = ss(.15, .29, p) * (1 - ss(.95, 1, p));
+  const v = Math.round(255 * (1 - dark)), f = Math.round(lerp(29, 245, dark));
+  setVar(sPin, '--sbg', `${v},${v},${v}`); setVar(sPin, '--sfg', `${f},${f},${Math.round(lerp(31, 247, dark))}`);
+  story.dataset.tone = dark > .5 ? 'dark' : 'light';
+  slines.forEach(l => { const a = +l.dataset.a, b = +l.dataset.b, o = ss(a, a + .035, p) * (1 - ss(b - .035, b, p)); if (l._o !== o) { l._o = o; l.style.setProperty('--o', o.toFixed(3)); } });
+  const sayO = ss(.64, .67, p) * (1 - ss(.74, .77, p));
+  sSayWrap.style.setProperty('--o', sayO.toFixed(3)); sSayWrap.dataset.on = sayO > .5 ? '1' : '0';
+  drawStory(t, p, dark);
+}
+sizeStory();
+addEventListener('resize', sizeStory);
+if (document.fonts) document.fonts.ready.then(sizeStory);
+$('#storySay').addEventListener('click', () => speak('Yêu thương'));
+
+/* ---------- Chapter 3 HUD ---------- */
+const poseWrap = $('#poses'), vfName = $('#vfName'), vfKind = $('#vfKind'), vfBar = $('#vfBar');
+let poseIdx = 0, conf = 0, confTarget = .93, switchAt = 0, userPick = -1e9, named = false;
+POSES.forEach((p, i) => {
+  const b = document.createElement('button'); b.className = 'pose' + (i ? '' : ' on'); b.textContent = p.name; b.type = 'button';
+  b.addEventListener('click', () => { pickPose(i); userPick = performance.now(); });
+  poseWrap.appendChild(b);
+});
+function pickPose(i) {
+  poseIdx = i; bigHand.set(POSES[i]); switchAt = performance.now(); conf = Math.min(conf, .2); named = false;
+  confTarget = .86 + Math.random() * .12; vfKind.textContent = 'Đang nhận diện…';
+  $$('.pose', poseWrap).forEach((b, k) => b.classList.toggle('on', k === i));
+}
+function tickConf(now) {
+  if (!bigHand.visible) return;
+  if (now - switchAt > 380) conf = lerp(conf, confTarget, .07);
+  vfBar.style.width = (conf * 100).toFixed(1) + '%';
+  if (!named && conf > .62) { named = true; vfName.textContent = POSES[poseIdx].name; vfKind.textContent = POSES[poseIdx].hint + ' · ' + Math.round(confTarget * 100) + '%'; }
+}
+setInterval(() => { if (!bigHand.visible || reduce || performance.now() - userPick < 9000) return; pickPose((poseIdx + 1) % POSES.length); }, 2800);
+$('#sayBtn').addEventListener('click', e => { const b = e.currentTarget; b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); speak(POSES[poseIdx].name); });
+
+/* ---------- Dictionary ---------- */
+const S = { mode: 'video', lang: 'en', running: false, size: 'md', bg: 'dark', hist: false, tts: true, history: [], words: [], practice: null };
+const DICT = {
+  en: { toks: ['The negotiations reached an ', 'impasse', ' after the ', 'merger', ' was ', 'scrutinized', ' by ', 'regulators', '.'],
+    vi: 'Các cuộc đàm phán rơi vào <b>bế tắc</b> sau khi thương vụ <b>sáp nhập</b> bị các <b>cơ quan quản lý</b> <b>xem xét kỹ lưỡng</b>.',
+    words: {
+      impasse: { r: '/ˈɪm.pæs/', pos: 'danh từ', m: 'Tình thế bế tắc, không thể tiến triển thêm.', ex: 'The talks reached an impasse. → Cuộc đàm phán rơi vào bế tắc.' },
+      merger: { r: '/ˈmɜː.dʒər/', pos: 'danh từ', m: 'Sự sáp nhập, hợp nhất hai công ty thành một.', ex: 'The merger created the largest bank in the region. → Vụ sáp nhập tạo ra ngân hàng lớn nhất khu vực.' },
+      scrutinized: { base: 'scrutinize', r: '/ˈskruː.tɪ.naɪz/', pos: 'động từ', m: 'Xem xét rất kỹ lưỡng, soi xét từng chi tiết.', ex: 'Every claim was scrutinized. → Mọi tuyên bố đều bị soi xét kỹ.' },
+      regulators: { base: 'regulator', r: '/ˈreɡ.jə.leɪ.tər/', pos: 'danh từ', m: 'Cơ quan hoặc người giám sát, quản lý một ngành.', ex: 'Banking regulators approved the deal. → Cơ quan quản lý ngân hàng đã phê duyệt thương vụ.' } } },
+  ja: { toks: ['この', '問題', 'は', '一筋縄', 'では', 'いかない', '。'],
+    vi: '<b>Vấn đề</b> này <b>không thể giải quyết theo cách thông thường</b> đâu.',
+    words: {
+      '問題': { r: 'もんだい · mondai', pos: 'danh từ', m: 'Vấn đề; câu hỏi (trong bài thi).', ex: '問題ありません。→ Không có vấn đề gì.' },
+      '一筋縄': { r: 'ひとすじなわ · hitosujinawa', pos: 'danh từ', m: 'Cách làm thông thường. Cụm 一筋縄ではいかない nghĩa là rất khó nhằn, không xử lý theo lối thường được.', ex: '彼は一筋縄ではいかない人だ。→ Anh ta là người không dễ đối phó.' },
+      'いかない': { base: '行く', r: 'いかない · ikanai', pos: 'động từ (phủ định)', m: 'Dạng phủ định của 行く. Trong cụm này mang nghĩa “không suôn sẻ, không xong”.', ex: 'うまくいかない。→ Mọi chuyện không suôn sẻ.' } } },
+  zh: { toks: ['我们要', '未雨绸缪', '，', '提前', '做好', '准备', '。'],
+    vi: 'Chúng ta phải <b>lo xa</b>, <b>chuẩn bị</b> sẵn sàng <b>từ trước</b>.',
+    words: {
+      '未雨绸缪': { r: 'wèi yǔ chóu móu · vị vũ trù mâu', pos: 'thành ngữ', m: 'Chưa mưa đã lo sửa nhà; phòng bị từ sớm trước khi việc xảy ra.', ex: '做事要未雨绸缪。→ Làm việc phải biết lo xa.' },
+      '提前': { r: 'tíqián · đề tiền', pos: 'động từ / trạng từ', m: 'Làm sớm hơn, trước thời hạn.', ex: '会议提前了。→ Cuộc họp được dời lên sớm hơn.' },
+      '准备': { r: 'zhǔnbèi · chuẩn bị', pos: 'động từ', m: 'Chuẩn bị, sắp xếp sẵn.', ex: '你准备好了吗？→ Bạn chuẩn bị xong chưa?' } } }
+};
+function dictLinks(lang, w) {
+  const q = encodeURIComponent(w);
+  if (lang === 'en') return [['Cambridge', 'https://dictionary.cambridge.org/dictionary/english/' + q], ['Oxford Learner’s', 'https://www.oxfordlearnersdictionaries.com/search/english/?q=' + q]];
+  if (lang === 'ja') return [['Jisho', 'https://jisho.org/search/' + q], ['Wiktionary', 'https://en.wiktionary.org/wiki/' + q]];
+  return [['MDBG', 'https://www.mdbg.net/chinese/dictionary?page=worddict&wdqb=' + q], ['Wiktionary', 'https://en.wiktionary.org/wiki/' + q]];
+}
+const LANG_VI = { en: 'Anh', ja: 'Nhật', zh: 'Trung' };
+let dLang = 'en', dWord = 'impasse';
+const subSrc = $('#subSrc');
+function renderTokens() {
+  const D = DICT[dLang];
+  subSrc.lang = dLang; subSrc.innerHTML = '';
+  let k = 0;
+  D.toks.forEach(t => {
+    if (D.words[t]) { const b = document.createElement('button'); b.className = 'tok'; b.dataset.w = t; b.textContent = t; b.type = 'button'; b.style.setProperty('--d', (k++ * .32) + 's'); b.addEventListener('click', () => { dWord = t; renderDict(); }); subSrc.appendChild(b); }
+    else subSrc.appendChild(document.createTextNode(t));
+  });
+  $('#subVi').innerHTML = D.vi;
+  $$('#subVi b').forEach((b, j) => b.style.setProperty('--d', (.5 + j * .22) + 's'));
+  const sc = $('.subcard'); if (sc.classList.contains('drawn')) { sc.classList.remove('drawn'); void sc.offsetWidth; sc.classList.add('drawn'); }
+}
+function renderDict() {
+  const D = DICT[dLang];
+  $$('.tok', subSrc).forEach(b => b.classList.toggle('on', b.dataset.w === dWord));
+  const Wd = D.words[dWord], base = Wd.base || dWord;
+  $('#dWord').textContent = base; $('#dWord').lang = dLang;
+  $('#dPos').textContent = Wd.pos; $('#dRead').textContent = Wd.r; $('#dMean').textContent = Wd.m; $('#dEx').textContent = Wd.ex;
+  $('#dLinks').innerHTML = '<span>Tra trong:</span>' + dictLinks(dLang, base).map(([n, u]) => `<a class="glass glass--light glass--sm" href="${u}" target="_blank" rel="noopener">${n}</a>`).join('');
+  $('#saveWord span').textContent = S.words.some(x => x.w === base) ? 'Đã lưu' : 'Lưu vào sổ từ vựng';
+}
+$$('#dictSeg .glass').forEach(b => b.addEventListener('click', () => {
+  dLang = b.dataset.l; dWord = Object.keys(DICT[dLang].words)[0];
+  $$('#dictSeg .glass').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderTokens(); renderDict();
+}));
+new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('drawn'); else if (e.boundingClientRect.top > 0) e.target.classList.remove('drawn'); }), { threshold: .55 }).observe($('.subcard'));
+$('#saveWord').addEventListener('click', () => {
+  const Wd = DICT[dLang].words[dWord], base = Wd.base || dWord;
+  if (!S.words.some(x => x.w === base)) { S.words.unshift({ w: base, m: Wd.m, lang: dLang }); renderWords(); }
+  renderDict();
+});
+function renderSaved() {
+  const row = $('#savedRow'); $$('.wchip', row).forEach(n => n.remove());
+  $('#savedEmpty').hidden = S.words.length > 0;
+  S.words.slice(0, 8).forEach(w => { const c = document.createElement('span'); c.className = 'wchip'; c.lang = w.lang || 'vi'; c.innerHTML = '<b></b><small></small>'; c.querySelector('b').textContent = w.w; c.querySelector('small').textContent = LANG_VI[w.lang] || ''; row.appendChild(c); });
+}
+
+/* ---------- App replica ---------- */
+const SAMPLES = {
+  video: {
+    en: [['Welcome back to the channel, everyone.', 'Chào mừng mọi người quay lại kênh.'], ['Today we are testing three budget cameras.', 'Hôm nay chúng ta sẽ thử ba chiếc máy ảnh giá rẻ.'], ['The results honestly surprised me.', 'Kết quả thật sự làm mình bất ngờ.'], ['Tell me in the comments which one you would pick.', 'Hãy bình luận cho mình biết bạn sẽ chọn chiếc nào.']],
+    ja: [['皆さん、こんにちは。', 'Xin chào mọi người.'], ['今日は京都の紅葉を見に来ました。', 'Hôm nay mình đến Kyoto ngắm lá đỏ.'], ['この時期は本当に混んでいます。', 'Thời điểm này thực sự rất đông người.'], ['朝早く来るのがおすすめです。', 'Mình khuyên nên đến từ sáng sớm.']],
+    zh: [['大家好，欢迎来到我的直播间。', 'Chào mọi người, chào mừng đến với phòng livestream của mình.'], ['今天教大家做一道家常菜。', 'Hôm nay mình hướng dẫn mọi người nấu một món ăn gia đình.'], ['先把肉切成小块。', 'Đầu tiên cắt thịt thành miếng nhỏ.'], ['火候一定要掌握好。', 'Nhất định phải canh lửa cho chuẩn.']]
+  },
+  talk: {
+    en: [['Excuse me, is this seat taken?', 'Xin lỗi, ghế này có ai ngồi chưa?'], ['The train to Hue leaves at nine.', 'Tàu đi Huế khởi hành lúc chín giờ.'], ['You can pay by card at the counter.', 'Bạn có thể thanh toán bằng thẻ ở quầy.']],
+    ja: [['すみません、駅はどこですか？', 'Xin lỗi, nhà ga ở đâu ạ?'], ['まっすぐ行って、右に曲がってください。', 'Đi thẳng rồi rẽ phải nhé.'], ['五分ぐらいで着きますよ。', 'Khoảng năm phút là tới.']],
+    zh: [['你好，请问这个多少钱？', 'Xin chào, cho hỏi cái này bao nhiêu tiền?'], ['今天打八折。', 'Hôm nay giảm giá 20%.'], ['需要帮你包起来吗？', 'Có cần mình gói lại giúp bạn không?']]
+  }
+};
+const MODE_DESC = {
+  video: 'Ứng dụng nghe âm thanh phát ra từ video hoặc ứng dụng khác, rồi hiện phụ đề tiếng Việt nổi trên màn hình.',
+  talk: 'Micro sẽ nghe người đối diện. Bật Đọc bản dịch bằng giọng nói trong Cài đặt nếu muốn nghe qua tai nghe. Chỉ dùng khi được đồng ý.'
+};
+const apBody = $('#apBody');
+function go(view) {
+  $$('.ap-view').forEach(v => v.hidden = v.dataset.view !== view);
+  $$('.ap-tab').forEach(t => t.classList.toggle('on', t.dataset.go === view));
+  apBody.scrollTop = 0; $('#apSheet').hidden = true;
+}
+function setStatus(text, running) { $$('[data-status-text]').forEach(n => n.textContent = text); $$('[data-status]').forEach(n => n.classList.toggle('running', !!running)); }
+function syncSegs() {
+  $$('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === S.mode));
+  $$('[data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
+  $$('[data-size]').forEach(b => b.classList.toggle('on', b.dataset.size === S.size));
+  $$('[data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === S.bg));
+  $('#modeDesc').textContent = MODE_DESC[S.mode];
+  ['#pv', '#pv2'].forEach(id => { const p = $(id); p.classList.remove('sz-sm', 'sz-md', 'sz-lg', 'bg-dark', 'bg-light'); p.classList.add('sz-' + S.size, 'bg-' + S.bg); });
+}
+let runTimer = null, runIdx = 0;
+function startRun() {
+  if (S.running) return; S.running = true; runIdx = 0;
+  setStatus(S.mode === 'talk' ? 'Đang nghe micro và dịch…' : 'Đang dịch âm thanh ứng dụng…', true);
+  $('#startBtn').disabled = true; nextLine(); runTimer = setInterval(nextLine, 3600);
+}
+function stopRun() {
+  if (!S.running) return; S.running = false; clearInterval(runTimer); clearInterval($('#pvVi')._t);
+  setStatus('Đã dừng phiên dịch', false); $('#startBtn').disabled = false; $('#pvTag').textContent = 'Câu gần nhất';
+  try { speechSynthesis.cancel(); } catch (e) {}
+}
+function nextLine() {
+  const arr = SAMPLES[S.mode][S.lang], [src, vi] = arr[runIdx++ % arr.length];
+  $('#pvTag').textContent = 'Đang dịch · ' + S.lang.toUpperCase() + ' → VI';
+  const ps = $('#pvSrc'); ps.textContent = src; ps.lang = S.lang;
+  typeOut($('#pvVi'), vi, null, 24);
+  if (S.hist) { S.history.unshift({ src, vi, lang: S.lang }); S.history.length = Math.min(S.history.length, 150); renderHist(); }
+  if (S.tts && S.mode === 'talk') speak(vi);
+}
+function renderHist() {
+  const q = $('#vSearch').value.trim().toLowerCase(), L = $('#histList'); L.innerHTML = '';
+  if (!S.history.length) { L.innerHTML = `<p class="empty">${S.hist ? 'Chưa có đoạn dịch nào. Bấm Bắt đầu ở tab Trực tiếp.' : 'Chưa có lịch sử. Vào Cài đặt → bật Lưu lịch sử và dịch một video.'}</p>`; return; }
+  const items = S.history.filter(h => !q || (h.src + h.vi).toLowerCase().includes(q)).slice(0, 20);
+  if (!items.length) { L.innerHTML = '<p class="empty">Không tìm thấy đoạn dịch phù hợp.</p>'; return; }
+  items.forEach(h => {
+    const d = document.createElement('div'); d.className = 'item';
+    d.innerHTML = '<small></small><b></b><div class="acts"><button type="button">Lưu</button></div>';
+    d.querySelector('small').textContent = h.src; d.querySelector('small').lang = h.lang; d.querySelector('b').textContent = h.vi;
+    d.querySelector('button').addEventListener('click', ev => { if (!S.words.some(w => w.w === h.src)) { S.words.unshift({ w: h.src, m: h.vi, lang: h.lang }); renderWords(); } ev.target.textContent = 'Đã lưu'; });
+    L.appendChild(d);
+  });
+}
+function renderWords() {
+  const q = $('#vSearch').value.trim().toLowerCase(), L = $('#wordList'); L.innerHTML = '';
+  if (!S.words.length) L.innerHTML = '<p class="empty">Chưa có từ nào được lưu. Nhấn Lưu ở một đoạn dịch, hoặc lưu từ ở phần Tra từ phía trên.</p>';
+  S.words.filter(w => !q || (w.w + w.m).toLowerCase().includes(q)).forEach(w => {
+    const d = document.createElement('div'); d.className = 'item';
+    const link = w.lang ? dictLinks(w.lang, w.w)[0] : null;
+    d.innerHTML = `<b></b><small></small><div class="acts">${link ? `<a href="${link[1]}" target="_blank" rel="noopener">Tra ${link[0]}</a>` : ''}<button type="button">Xóa</button></div>`;
+    d.querySelector('b').textContent = w.w; if (w.lang) d.querySelector('b').lang = w.lang;
+    d.querySelector('small').textContent = w.m || 'Chưa có ghi chú';
+    d.querySelector('button').addEventListener('click', () => { S.words = S.words.filter(x => x !== w); renderWords(); renderDict(); });
+    L.appendChild(d);
+  });
+  renderSaved();
+}
+POSES.forEach((p, i) => {
+  const it = document.createElement('div'); it.className = 'item';
+  it.innerHTML = '<b></b><small></small><div class="acts"><button type="button">Xem trên camera</button></div>';
+  it.querySelector('b').textContent = (i + 1) + '. ' + p.name; it.querySelector('small').textContent = p.hint;
+  it.querySelector('button').addEventListener('click', () => { setSub('cam'); appShow(i); });
+  $('#learnList').appendChild(it);
+  const c = document.createElement('button'); c.className = 'sbtn'; c.type = 'button'; c.textContent = p.name;
+  c.addEventListener('click', () => { S.practice = i; $$('#practiceChips .sbtn').forEach((x, k) => x.classList.toggle('on', k === i)); $('#practiceMsg').textContent = 'Hãy làm dáng tay “' + p.name + '”: ' + p.hint.toLowerCase() + '.'; $('#checkBtn').disabled = false; });
+  $('#practiceChips').appendChild(c);
+});
+let appPose = 0;
+function appShow(i) {
+  appPose = i; appHand.set(POSES[i]); $('#apRes').textContent = 'Đang nhận diện…'; $('#apRes').className = '';
+  setTimeout(() => { if (appPose === i) { $('#apRes').textContent = POSES[i].name; $('#apResSub').textContent = POSES[i].hint + ' · độ tin cậy ' + (86 + Math.round(Math.random() * 12)) + '%'; } }, 650);
+}
+function setSub(s) { $$('[data-sub]').forEach(b => b.classList.toggle('on', b.dataset.sub === s)); $$('[data-subview]').forEach(v => v.hidden = v.dataset.subview !== s); if (s === 'cam') setTimeout(() => appHand.size(), 30); }
+setInterval(() => { if (appHand.visible && S.practice === null && !reduce) appShow((appPose + 1) % POSES.length); }, 3200);
+$('#app').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.go) go(t.dataset.go);
+  else if (t.dataset.mode) { if (S.running) stopRun(); S.mode = t.dataset.mode; syncSegs(); }
+  else if (t.dataset.lang) { if (S.running) stopRun(); S.lang = t.dataset.lang; syncSegs(); }
+  else if (t.dataset.size) { S.size = t.dataset.size; syncSegs(); }
+  else if (t.dataset.bg) { S.bg = t.dataset.bg; syncSegs(); }
+  else if (t.dataset.sub) setSub(t.dataset.sub);
+  else if (t.dataset.set) { const on = t.getAttribute('aria-checked') !== 'true'; t.setAttribute('aria-checked', on); S[t.dataset.set] = on; if (t.dataset.set === 'hist') renderHist(); }
+  else if (t.id === 'apHelp') $('#apSheet').hidden = !$('#apSheet').hidden;
+  const act = t.dataset.act;
+  if (act === 'start') startRun();
+  if (act === 'startFromHome') { go('live'); startRun(); }
+  if (act === 'stop') stopRun();
+  if (act === 'clearHist') { S.history = []; renderHist(); }
+  if (act === 'toggleAdd') { const f = $('#addForm'); f.hidden = !f.hidden; if (!f.hidden) $('#newW').focus(); }
+  if (act === 'addWord') { const w = $('#newW').value.trim(); if (!w) { $('#newW').focus(); return; } S.words.unshift({ w, m: $('#newM').value.trim(), lang: null }); $('#newW').value = ''; $('#newM').value = ''; $('#addForm').hidden = true; renderWords(); }
+  if (act === 'sayApp') speak($('#apRes').textContent);
+  if (act === 'check' && S.practice !== null) {
+    const i = S.practice; appShow(i); $('#practiceMsg').textContent = 'Máy đang kiểm tra dáng tay của bạn…'; t.disabled = true;
+    setTimeout(() => { $('#practiceMsg').textContent = 'Đúng rồi! Bạn đã làm được “' + POSES[i].name + '”.'; $('#apRes').className = 'ok'; t.disabled = false; S.practice = null; $$('#practiceChips .sbtn').forEach(x => x.classList.remove('on')); }, 1500);
+  }
+});
+$('#vSearch').addEventListener('input', () => { renderHist(); renderWords(); });
+$$('[data-try]').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.try;
+  if (k === 'ja') { if (S.running) stopRun(); S.lang = 'ja'; syncSegs(); go('home'); }
+  if (k === 'start') { go('live'); startRun(); }
+  if (k === 'sign') { go('sign'); setSub('cam'); }
+  if (k === 'vocab') go('vocab');
+  if (innerWidth < 900) $('.phone').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+}));
+syncSegs(); renderTokens(); renderDict(); renderHist(); renderWords(); appShow(0);
+})();
+</script>
